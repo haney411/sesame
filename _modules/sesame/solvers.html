@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sesame.solvers &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sesame.solvers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 University of Maryland.</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of Sesame. It is subject to the license terms in the file</span>
+<span class="c1"># LICENSE.rst found in the top-level directory of this distribution.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="k">import</span> <span class="n">savemat</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analyzer</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="n">utils</span> <span class="kn">import</span> <span class="nn">save_sim</span>
+
+<span class="kn">from</span> <span class="nn">.analyzer</span> <span class="k">import</span> <span class="n">Analyzer</span>
+
+<span class="kn">import</span> <span class="nn">scipy.sparse.linalg</span> <span class="k">as</span> <span class="nn">lg</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">spdiags</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="k">import</span> <span class="n">coo_matrix</span><span class="p">,</span> <span class="n">csr_matrix</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;solve_equilibrium&#39;</span><span class="p">,</span> <span class="s1">&#39;solve&#39;</span><span class="p">,</span> <span class="s1">&#39;IVcurve&#39;</span><span class="p">]</span>
+
+<span class="c1"># check if MUMPS is available</span>
+<span class="n">mumps_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">mumps</span>
+    <span class="n">mumps_available</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+        
+<span class="k">class</span> <span class="nc">NewtonError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">SparseSolverError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">BCsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BCs</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*********************************************&quot;</span> <span class="o">+</span>\
+              <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*  Unknown contacts boundary conditions     *&quot;</span> <span class="o">+</span>\
+              <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">*********************************************&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Contacts boundary conditions: &#39;</span><span class="si">{0}</span><span class="s2">&#39; is different from &#39;Ohmic&#39;, &#39;Schottky&#39;, or &#39;Neumann&#39;.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">BCs</span><span class="p">))</span>
+
+ 
+<div class="viewcode-block" id="Solver"><a class="viewcode-back" href="../../reference/sesame.solvers.solver.html#sesame.solvers.Solver">[docs]</a><span class="k">class</span> <span class="nc">Solver</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An object that creates an interface for the equilibrium and nonequilibrium</span>
+<span class="sd">    solvers of Sesame, and stores the equilibrium electrostatic potential once</span>
+<span class="sd">    computed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    use_mumps: boolean</span>
+<span class="sd">        Flag for the use of the MUMPS library if available. The flag is set to</span>
+<span class="sd">        True by default. If the MUMPS library is absent, the flag has no effect.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    equilibrium: numpy array of floats</span>
+<span class="sd">        Electrostatic potential computed at thermal equilibrium.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_mumps</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_mumps</span> <span class="o">=</span> <span class="n">use_mumps</span>
+
+    <span class="k">def</span> <span class="nf">solve_equilibrium</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>\
+          <span class="n">maxiter</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">iterative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solve the Poisson equation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system: Builder</span>
+<span class="sd">            The discretized system.</span>
+<span class="sd">        guess: numpy array of floats</span>
+<span class="sd">            Contains the electrostatic potential.</span>
+<span class="sd">        tol: float</span>
+<span class="sd">            Accepted error made by the Newton-Raphson scheme.</span>
+<span class="sd">        periodic_bcs: boolean</span>
+<span class="sd">            Defines the choice of boundary conditions in the y-direction. True</span>
+<span class="sd">            (False) corresponds to periodic (abrupt) boundary conditions.</span>
+<span class="sd">        maxiter: integer</span>
+<span class="sd">            Maximum number of steps taken by the Newton-Raphson scheme.</span>
+<span class="sd">        verbose: boolean</span>
+<span class="sd">            The solver returns the step number and the associated error at every</span>
+<span class="sd">            step if set to True (default).</span>
+<span class="sd">        iterative: boolean</span>
+<span class="sd">            Defines if an iterative method should be used to solve for the Newton</span>
+<span class="sd">            correction instead of a direct method. Default is False.</span>
+<span class="sd">        inner_tol: float</span>
+<span class="sd">            Error of the inner iterative solver when used.</span>
+<span class="sd">        htp: integer</span>
+<span class="sd">            Number of homotopic Newton loops to perform.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        solution: dictionary with  numpy arrays of floats</span>
+<span class="sd">            Dictionary containing the one-dimensional arrays of the solution:</span>
+<span class="sd">            the electron quasi-Fermi level (zeros), the hole quasi-Fermi level</span>
+<span class="sd">            (zeros) and the electrostatic potential. Keys are &#39;efn&#39;, &#39;efp&#39; and</span>
+<span class="sd">            &#39;v&#39;.  An exception is raised if no solution could be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">common_solver</span><span class="p">(</span><span class="s1">&#39;Poisson&#39;</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">,</span>\
+                    <span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>\
+          <span class="n">maxiter</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">iterative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solve the drift diffusion Poisson equation on a given discretized</span>
+<span class="sd">        system out of equilibrium. If the equilibrium electrostatic potential is</span>
+<span class="sd">        not yet computed, the routine will compute it and save it for further</span>
+<span class="sd">        computations.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system: Builder</span>
+<span class="sd">            The discretized system.</span>
+<span class="sd">        guess: dictionary of numpy arrays of floats</span>
+<span class="sd">            Contains the one-dimensional arrays of the initial guesses for the</span>
+<span class="sd">            electron quasi-Fermi level, the hole quasi-Fermi level and the</span>
+<span class="sd">            electrostatic potential. Keys should be &#39;efn&#39;, &#39;efp&#39; and &#39;v&#39;.</span>
+<span class="sd">        tol: float</span>
+<span class="sd">            Accepted error made by the Newton-Raphson scheme.</span>
+<span class="sd">        periodic_bcs: boolean</span>
+<span class="sd">            Defines the choice of boundary conditions in the y-direction. True</span>
+<span class="sd">            (False) corresponds to periodic (abrupt) boundary conditions.</span>
+<span class="sd">        maxiter: integer</span>
+<span class="sd">            Maximum number of steps taken by the Newton-Raphson scheme.</span>
+<span class="sd">        verbose: boolean</span>
+<span class="sd">            The solver returns the step number and the associated error at every</span>
+<span class="sd">            step if set to True (default).</span>
+<span class="sd">        iterative: boolean</span>
+<span class="sd">            Defines if an iterative method should be used to solve for the Newton</span>
+<span class="sd">            correction instead of a direct method. Default is False.</span>
+<span class="sd">        inner_tol: float</span>
+<span class="sd">            Error of the inner iterative solver when used.</span>
+<span class="sd">        htp: integer</span>
+<span class="sd">            Number of homotopic Newton loops to perform.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        solution: dictionary with  numpy arrays of floats</span>
+<span class="sd">            Dictionary containing the one-dimensional arrays of the solution. The</span>
+<span class="sd">            keys are the same as the ones for the guess. An exception is raised</span>
+<span class="sd">            if no solution could be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">common_solver</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">,</span>\
+                    <span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+    
+    <span class="k">def</span> <span class="nf">make_guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">):</span>
+        <span class="c1"># Make a linear assumption based on Dirichlet contacts</span>
+        <span class="n">nx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span>
+        <span class="c1"># determine what the potential on the left might be</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Ohmic&#39;</span> <span class="ow">or</span>\
+           <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Neutral&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># p-doped</span>
+                <span class="n">v_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">system</span><span class="o">.</span><span class="n">Eg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>\
+                         <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="n">system</span><span class="o">.</span><span class="n">Nv</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">system</span><span class="o">.</span><span class="n">bl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># n-doped</span>
+                <span class="n">v_left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">system</span><span class="o">.</span><span class="n">Nc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">system</span><span class="o">.</span><span class="n">bl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Schottky&#39;</span><span class="p">:</span>
+            <span class="n">v_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">system</span><span class="o">.</span><span class="n">contacts_WF</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">system</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span>
+
+        <span class="c1"># determine what the potential on the right might be</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Ohmic&#39;</span> <span class="ow">or</span>\
+           <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Neutral&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">v_right</span> <span class="o">=</span> <span class="o">-</span><span class="n">system</span><span class="o">.</span><span class="n">Eg</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>\
+                          <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">system</span><span class="o">.</span><span class="n">Nv</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>\
+                          <span class="o">-</span> <span class="n">system</span><span class="o">.</span><span class="n">bl</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">v_right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">system</span><span class="o">.</span><span class="n">Nc</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">system</span><span class="o">.</span><span class="n">bl</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">contacts_bcs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Schottky&#39;</span><span class="p">:</span>
+            <span class="n">v_right</span> <span class="o">=</span> <span class="o">-</span><span class="n">system</span><span class="o">.</span><span class="n">contacts_WF</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">system</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span>
+
+
+        <span class="c1"># Make a linear guess for the equilibrium potential</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">v_left</span><span class="p">,</span> <span class="n">v_right</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># replicate the guess in the y-direction</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="p">)</span> 
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># replicate the guess in the y and z-direction</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span> 
+
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">common_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">,</span>\
+          <span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="p">):</span>
+
+        <span class="c1"># Check if we only want the electrostatic potential</span>
+        <span class="k">if</span> <span class="n">compute</span> <span class="o">==</span> <span class="s1">&#39;Poisson&#39;</span><span class="p">:</span> <span class="c1"># Only Poisson is solved</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># delete it to force its computation</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Solving for the equilibrium electrostatic potential&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">guess</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">guess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_guess</span><span class="p">(</span><span class="n">system</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># testing of the data type of guess.</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">guess</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="n">guess</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Compute the potential (Newton returns an array)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_newton</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span>\
+                              <span class="n">periodic_bcs</span><span class="o">=</span><span class="n">periodic_bcs</span><span class="p">,</span>\
+                              <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>\
+                              <span class="n">iterative</span><span class="o">=</span><span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="n">htp</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Return now if the electrostatic potential is all we wanted</span>
+        <span class="k">if</span> <span class="n">compute</span> <span class="o">==</span> <span class="s1">&#39;Poisson&#39;</span><span class="p">:</span>
+            <span class="n">efn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">)</span>
+            <span class="n">efp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;efn&#39;</span><span class="p">:</span> <span class="n">efn</span><span class="p">,</span> <span class="s1">&#39;efp&#39;</span><span class="p">:</span><span class="n">efp</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">)}</span>
+
+        <span class="c1"># Otherwise, keep going with the full problem</span>
+        <span class="k">if</span> <span class="n">compute</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="c1"># array to pass to Newton routine</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">guess</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># I will try with equilibrium</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="s1">&#39;efn&#39;</span><span class="p">]</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="s1">&#39;efp&#39;</span><span class="p">]</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">guess</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span>
+
+            <span class="c1"># Compute solution (Newton returns an array)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_newton</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="n">periodic_bcs</span><span class="p">,</span>\
+                       <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>\
+                       <span class="n">iterative</span><span class="o">=</span><span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="n">htp</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;efn&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;efp&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">]}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_damping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+        <span class="c1"># This damping procedure is inspired from Solid-State Electronics, vol. 19,</span>
+        <span class="c1"># pp. 991-992 (1976).</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="n">dx</span><span class="p">[</span><span class="n">b</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">[</span><span class="n">b</span><span class="p">])</span><span class="o">*</span><span class="mf">1.72</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">dx</span><span class="p">[</span><span class="n">b</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">_sparse_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">iterative</span><span class="p">:</span>
+            <span class="n">spsolve</span> <span class="o">=</span> <span class="n">lg</span><span class="o">.</span><span class="n">spsolve</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mumps</span> <span class="ow">and</span> <span class="n">mumps_available</span><span class="p">:</span> 
+                <span class="n">spsolve</span> <span class="o">=</span> <span class="n">mumps</span><span class="o">.</span><span class="n">spsolve</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">J</span> <span class="o">=</span> <span class="n">J</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="n">spsolve</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">M</span> <span class="o">=</span> <span class="n">spdiags</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">J</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(),</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">dx</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">lg</span><span class="o">.</span><span class="n">lgmres</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">inner_tol</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">info</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dx</span>
+            <span class="k">elif</span> <span class="n">info</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;**  Iterative sparse solver failed after </span><span class="si">{0}</span><span class="s2"> iterations. **&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;**  Iterative sparse solver failed on wrong input. **&quot;</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_system</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">):</span>
+        <span class="c1"># Compute the right hand side of J * x = f</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span> <span class="o">*</span> <span class="n">system</span><span class="o">.</span><span class="n">ny</span> <span class="o">*</span> <span class="n">system</span><span class="o">.</span><span class="n">nz</span>
+            <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">rhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.getFandJ_eq</span><span class="si">{0}</span><span class="s1">&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">getFandJ_eq</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.getFandJ_eq1&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">getFandJ_eq</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span> <span class="o">*</span> <span class="n">system</span><span class="o">.</span><span class="n">ny</span> <span class="o">*</span> <span class="n">system</span><span class="o">.</span><span class="n">nz</span>
+            <span class="k">if</span> <span class="n">periodic_bcs</span> <span class="o">==</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">system</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">rhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.getF</span><span class="si">{0}</span><span class="s1">_abrupt&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+                <span class="n">lhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.jacobian</span><span class="si">{0}</span><span class="s1">_abrupt&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.getF</span><span class="si">{0}</span><span class="s1">&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+                <span class="n">lhs</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.jacobian</span><span class="si">{0}</span><span class="s1">&#39;</span>\
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="s1">&#39;sesame&#39;</span><span class="p">)</span>
+
+            <span class="n">f</span> <span class="o">=</span> <span class="n">rhs</span><span class="o">.</span><span class="n">getF</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">)</span>
+            <span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">lhs</span><span class="o">.</span><span class="n">getJ</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">3</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="c1"># form the Jacobian</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mumps</span> <span class="ow">and</span> <span class="n">mumps_available</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">J</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">J</span>
+
+    <span class="k">def</span> <span class="nf">_newton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>\
+            <span class="n">maxiter</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">iterative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+        <span class="n">htpy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">htp</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">htp</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">gdx</span><span class="p">,</span> <span class="n">gamma</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">htpy</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Newton loop </span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gdx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">htp</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">gamma</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">htol</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">htol</span> <span class="o">=</span> <span class="n">tol</span>
+
+            <span class="n">cc</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">gamma</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">f0</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_system</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">)</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+                <span class="n">cc</span> <span class="o">=</span> <span class="n">cc</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="c1"># break if no solution found after maxiterations</span>
+                <span class="k">if</span> <span class="n">cc</span> <span class="o">&gt;</span> <span class="n">maxiter</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;**  Maximum number of iterations reached  **&quot;</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+                <span class="c1"># solve linear system</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">J</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_system</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">gamma</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">f</span> <span class="o">-=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">gamma</span><span class="p">)</span><span class="o">*</span><span class="n">f0</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_solver</span><span class="p">(</span><span class="n">J</span><span class="p">,</span> <span class="o">-</span><span class="n">f</span><span class="p">,</span> <span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">SparseSolverError</span>
+                        <span class="k">break</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">dx</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+                        <span class="c1"># compute error</span>
+                        <span class="n">error</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="ow">or</span> <span class="n">error</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="n">e30</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">NewtonError</span>
+                            <span class="k">break</span>
+                        <span class="k">if</span> <span class="n">error</span> <span class="o">&lt;</span> <span class="n">htol</span><span class="p">:</span>
+                            <span class="n">converged</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">else</span><span class="p">:</span> 
+                            <span class="c1"># damping and new value of x</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_damping</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+                            <span class="n">x</span> <span class="o">+=</span> <span class="n">dx</span>
+                        <span class="c1"># print status of solution procedure</span>
+                        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;step </span><span class="si">{0}</span><span class="s1">, error = </span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cc</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
+                <span class="k">except</span> <span class="n">SparseSolverError</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;**  The linear system could not be solved  **&quot;</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+                <span class="k">except</span> <span class="n">NewtonError</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;**  The Newton-Raphson algorithm diverged  **&quot;</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">break</span>
+                        
+        <span class="k">if</span> <span class="n">converged</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">IVcurve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="n">guess</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span>\
+                <span class="n">periodic_bcs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>\
+                <span class="n">iterative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;npz&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Solve the Drift Diffusion Poisson equations for the voltages provided. The</span>
+<span class="sd">        results are stored in files with ``.npz`` format by default (See below for</span>
+<span class="sd">        saving in Matlab format). The steady state current is computed at the</span>
+<span class="sd">        end of the voltage loop and returned. Note that the</span>
+<span class="sd">        potential is always applied on the right contact.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        system: Builder</span>
+<span class="sd">            The discretized system.</span>
+<span class="sd">        voltages: array-like</span>
+<span class="sd">            List of voltages for which the current should be computed.</span>
+<span class="sd">        guess: dictionary of numpy arrays of floats</span>
+<span class="sd">            Starting point of the solver. Keys of the dictionary must be &#39;efn&#39;,</span>
+<span class="sd">            &#39;efp&#39;, &#39;v&#39; for the electron and quasi-Fermi levels, and the</span>
+<span class="sd">            electrostatic potential respectively.</span>
+<span class="sd">        file_name: string</span>
+<span class="sd">            Name of the file to write the data to. The file name will be appended</span>
+<span class="sd">            the index of the voltage list, e.g. ``file_name_0.npz``.</span>
+<span class="sd">        tol: float</span>
+<span class="sd">            Accepted error made by the Newton-Raphson scheme.</span>
+<span class="sd">        periodic_bcs: boolean</span>
+<span class="sd">            Defines the choice of boundary conditions in the y-direction. True</span>
+<span class="sd">            (False) corresponds to periodic (abrupt) boundary conditions.</span>
+<span class="sd">        maxiter: integer</span>
+<span class="sd">            Maximum number of steps taken by the Newton-Raphson scheme.</span>
+<span class="sd">        verbose: boolean</span>
+<span class="sd">            The solver returns the step number and the associated error at every</span>
+<span class="sd">            step, and this function prints the current applied voltage if set to True (default).</span>
+<span class="sd">        iterative: boolean</span>
+<span class="sd">            Defines if an iterative method should be used to solve for the Newton</span>
+<span class="sd">            correction instead of a direct method. Default is False.</span>
+<span class="sd">        inner_tol: float</span>
+<span class="sd">            Error of the inner iterative solver when used.</span>
+<span class="sd">        htp: integer</span>
+<span class="sd">            Number of homotopic Newton loops to perform.</span>
+<span class="sd">        fmt: string</span>
+<span class="sd">            Format string for the data files. Use ``mat`` to save the data in a</span>
+<span class="sd">            Matlab format (version 5 and above).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        J: numpy array of floats</span>
+<span class="sd">            Steady state current computed for each voltage value.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The data files can be loaded and used as follows:</span>
+
+<span class="sd">        &gt;&gt;&gt; results = np.load(&#39;file.npz&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; efn = results[&#39;efn&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; efp = results[&#39;efp&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; v = results[&#39;v&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># create a dictionary &#39;result&#39; with efn and efp</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">guess</span>
+
+        <span class="c1"># sites of the right contact</span>
+        <span class="n">nx</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">nx</span> <span class="o">+</span> <span class="n">k</span><span class="o">*</span><span class="n">nx</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">ny</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">nz</span><span class="p">)</span>\
+                                          <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="p">)]</span>
+
+        <span class="c1"># sign of the voltage to apply</span>
+        <span class="k">if</span> <span class="n">system</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="c1"># Solving equilbrium potential first</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Equilibrium potential already computed. Moving on.&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solve_equilibrium</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="n">periodic_bcs</span><span class="p">,</span>\
+                           <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>\
+                           <span class="n">iterative</span><span class="o">=</span><span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="n">htp</span><span class="p">)</span>
+
+
+        <span class="c1"># Applied potentials made dimensionless</span>
+        <span class="n">Vapp</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">/</span> <span class="n">system</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">voltages</span><span class="p">]</span>
+        <span class="c1"># Array of the steady state current</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">Vapp</span><span class="p">),))</span>
+        <span class="n">J</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">vapp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Vapp</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Applied voltage: </span><span class="si">{0}</span><span class="s2"> V&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">voltages</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+
+            <span class="c1"># Apply the voltage on the right contact</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equilibrium</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">+</span> <span class="n">q</span><span class="o">*</span><span class="n">vapp</span>
+
+            <span class="c1"># Call the Drift Diffusion Poisson solver</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="n">periodic_bcs</span><span class="p">,</span>\
+                           <span class="n">maxiter</span><span class="o">=</span><span class="n">maxiter</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>\
+                           <span class="n">iterative</span><span class="o">=</span><span class="n">iterative</span><span class="p">,</span> <span class="n">inner_tol</span><span class="o">=</span><span class="n">inner_tol</span><span class="p">,</span> <span class="n">htp</span><span class="o">=</span><span class="n">htp</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># 1. Save efn, efp, v</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">file_name</span> <span class="o">+</span> <span class="s2">&quot;_</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="c1"># add some system settings to the saved results</span>
+
+                <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s1">&#39;mat&#39;</span><span class="p">:</span>
+                    <span class="n">save_sim</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;mat&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.gzip&quot;</span> <span class="o">%</span> <span class="n">name</span>
+                    <span class="n">save_sim</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="c1"># 2. Compute the steady state current</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">az</span> <span class="o">=</span> <span class="n">Analyzer</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+                    <span class="n">J</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">full_current</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Could not compute the current for the applied voltage&quot;</span>\
+                      <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{0}</span><span class="s2"> V (index </span><span class="si">{1}</span><span class="s2">).&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">voltages</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">idx</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;The solver failed to converge for the applied voltage&quot;</span>\
+                      <span class="o">+</span> <span class="s2">&quot; </span><span class="si">{0}</span><span class="s2"> V (index </span><span class="si">{1}</span><span class="s2">).&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">voltages</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">idx</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">J</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">J</span></div>
+
+
+<span class="n">default</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">()</span>
+<span class="n">solve</span> <span class="o">=</span> <span class="n">default</span><span class="o">.</span><span class="n">solve</span>
+<span class="n">solve_equilibrium</span> <span class="o">=</span> <span class="n">default</span><span class="o">.</span><span class="n">solve_equilibrium</span>
+<span class="n">IVcurve</span> <span class="o">=</span> <span class="n">default</span><span class="o">.</span><span class="n">IVcurve</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

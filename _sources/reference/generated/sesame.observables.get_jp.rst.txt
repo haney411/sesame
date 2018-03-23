@@ -1,0 +1,6 @@
+sesame\.observables\.get\_jp
+============================
+
+.. currentmodule:: sesame.observables
+
+.. autofunction:: get_jp

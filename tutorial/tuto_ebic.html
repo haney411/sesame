@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.5. Tutorial 5: Simulating an EBIC/CL experiment &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.6. Tutorial 6: Batch submission for computing clusters" href="parallel.html" />
+    <link rel="prev" title="3.4. Tutorial 4: Saving, loading, and analyzing simulation data" href="analysis.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-5-simulating-an-ebic-cl-experiment">
+<h1>3.5. Tutorial 5: Simulating an EBIC/CL experiment<a class="headerlink" href="#tutorial-5-simulating-an-ebic-cl-experiment" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we build a 2-dimensional simulation to describe experiments with a localized carrier generation profile, such as electron beam induced current (EBIC), or cathodoluminescence (CL).</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">2d_EBIC.py</span></code> located in the <code class="docutils literal"><span class="pre">examples\tutorial5</span></code> directory of the distribution.  The same simulation&#8217;s GUI input file is <code class="docutils literal"><span class="pre">2d_EBIC.ini</span></code>, also located in the <code class="docutils literal"><span class="pre">examples\tutorial5</span></code> directory.</p>
+</div>
+<p>For this case we&#8217;ll need to define a system as before, and then define a custom carrier generation rate density profile associated with electron beam excitation.  We&#8217;ll then cycle over beam positions and compute the total current and total radiative recombination as a function of beam position.</p>
+<div align="center" class="align-center"><img alt="../_images/EBIC.svg" src="../_images/EBIC.svg" /></div>
+<div class="section" id="building-the-system">
+<h2>3.5.1. Building the system<a class="headerlink" href="#building-the-system" title="Permalink to this headline">¶</a></h2>
+<p>The system we want to build is a 2-dimensional p-n junction in which the &#8220;top&#8221; of the system represents the exposed sample surface.  Building the 2-d pn junction proceeds as in the previous tutorials, and the code is shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1">## dimensions of the system</span>
+<span class="n">Lx</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>   <span class="c1">#[cm]</span>
+<span class="n">Ly</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>   <span class="c1">#[cm]</span>
+
+<span class="c1"># extent of the junction from the left contact [cm]</span>
+<span class="n">junction</span> <span class="o">=</span> <span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>    <span class="c1"># [cm]</span>
+
+<span class="c1"># Mesh</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">.</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2e-4</span><span class="p">,</span> <span class="mf">1.4e-4</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.4e-4</span><span class="p">,</span> <span class="mf">2.7e-4</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.7e-4</span><span class="p">,</span> <span class="n">Lx</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">25</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">.</span><span class="mi">25</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">1.25e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.25e-4</span><span class="p">,</span> <span class="n">Ly</span><span class="p">,</span> <span class="mi">50</span><span class="p">)))</span>
+
+<span class="c1"># Create a system</span>
+<span class="n">sys</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Dictionary with the material parameters</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span><span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span><span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span><span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span><span class="mf">9.4</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span><span class="mi">320</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span><span class="mi">40</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span><span class="mi">10</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span><span class="mi">10</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">}</span>
+
+<span class="c1"># Add the material to the system</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+<span class="c1"># define a function specifiying the n-type region</span>
+<span class="k">def</span> <span class="nf">n_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">junction</span>
+<span class="c1"># define a function specifiying the p-type region</span>
+<span class="k">def</span> <span class="nf">p_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">junction</span>
+
+<span class="c1"># Add the donors</span>
+<span class="n">nD</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span> <span class="c1"># [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_donor</span><span class="p">(</span><span class="n">nD</span><span class="p">,</span> <span class="n">n_region</span><span class="p">)</span>
+<span class="c1"># Add the acceptors</span>
+<span class="n">nA</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e15</span> <span class="c1"># [m^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_acceptor</span><span class="p">(</span><span class="n">nA</span><span class="p">,</span> <span class="n">p_region</span><span class="p">)</span>
+
+<span class="c1"># Use Ohmic contacts</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_type</span><span class="p">(</span><span class="s1">&#39;Ohmic&#39;</span><span class="p">,</span><span class="s1">&#39;Ohmic&#39;</span><span class="p">)</span>
+<span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_S</span><span class="p">(</span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-surface-recombination">
+<h2>3.5.2. Adding surface recombination<a class="headerlink" href="#adding-surface-recombination" title="Permalink to this headline">¶</a></h2>
+<p>Adding recombination at the sample surface is accomplished with a planar defect along the line <img class="math" src="../_images/math/4af768cddd82ed22f0b7be4eaec2654c3baba32a.png" alt="y=L_y"/>.  We consider a neutral surface, so that the charge state of the defect is always 0.  This is implemented by setting <code class="docutils literal"><span class="pre">transition=(0,0)</span></code> as an input argument to <code class="docutils literal"><span class="pre">add_line_defects()</span></code>.  As described in the previous tutorial, the values given in <code class="docutils literal"><span class="pre">transition</span></code> set the charge of the defect when its occupied or unoccupied:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ly</span><span class="p">)</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="n">Lx</span><span class="p">,</span> <span class="n">Ly</span><span class="p">)</span>
+
+<span class="n">E</span> <span class="o">=</span> <span class="mi">0</span>                   <span class="c1"># energy of gap state (eV) from intrinsic level</span>
+<span class="n">rhoGB</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e14</span>            <span class="c1"># density of defect states [cm^-2]</span>
+<span class="n">s</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">14</span>               <span class="c1"># defect capture cross section [cm^2]</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">add_line_defects</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">],</span> <span class="n">rhoGB</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="electron-beam-excitation">
+<h2>3.5.3. Electron beam excitation<a class="headerlink" href="#electron-beam-excitation" title="Permalink to this headline">¶</a></h2>
+<p>Next we review the physics of the electron beam excitation.  For a beam focused at <img class="math" src="../_images/math/d478d5c787dfefa10c65ac37fa9aff893da4c8b8.png" alt="(x_0,y_0)"/>, a simple parameterization of the generation rate density profile is given by a Gaussian:</p>
+<div class="math" id="equation-Gxy">
+<p><span class="eqno">(1)<a class="headerlink" href="#equation-Gxy" title="Permalink to this equation">¶</a></span><img src="../_images/math/ab3fd69922c57c4de5675fe48ccdd428862da799.png" alt="G(x,y) &amp;= \frac{G_{\rm tot}}{A} \times \exp\left(-\frac{(x-x_0)^2+(y-y_0)^2}{2\sigma^2}\right)"/></p>
+</div><p>For our geometry, <img class="math" src="../_images/math/fc8f9d6b2083c620e3d5b055e0e9f6e11ee24b8c.png" alt="~x_0"/> is the lateral beam position, while the depth of the excitation from the sample surface is <img class="math" src="../_images/math/ec23709387ab2d8ad2147380dc54b1e52de21d24.png" alt="y_0"/>.  The total generation rate (units <img class="math" src="../_images/math/a4d5ba109113aeebf7461193559439dc8b5f70b9.png" alt="1/s"/>) is approximated by <a class="footnote-reference" href="#id3" id="id1">[4]</a>:</p>
+<div class="math" id="equation-A">
+<p><span class="eqno">(2)<a class="headerlink" href="#equation-A" title="Permalink to this equation">¶</a></span><img src="../_images/math/9a4c74304ebbd89d4dceb38db1eaa652d8bffd69.png" alt="G_{tot} &amp;\approx \frac{I_{\rm beam}}{q} \times \frac{E_{\rm beam}}{3 E_g}"/></p>
+</div><p>The length scale of the excitation <img class="math" src="../_images/math/011e5790a6c33043ceadca81d9657dde6c61d769.png" alt="\sigma"/> is determined by the electron beam energy and material mass density, and is written in terms of the interaction distance <img class="math" src="../_images/math/6e360a3b0132db086177d0ed677c726498e2e980.png" alt="R_B"/>:</p>
+<div class="math" id="equation-Rb">
+<p><span class="eqno">(3)<a class="headerlink" href="#equation-Rb" title="Permalink to this equation">¶</a></span><img src="../_images/math/068ab3eef8a5a54d6266830f19666e6f98c601d4.png" alt="R_B &amp;= r_0 \left(\frac{0.043}{\rho/\rho_0}\right) \times \left(E_{\rm beam} /E_0\right)^{1.75}"/></p>
+</div><p>The constants in Eq. <a class="reference internal" href="#equation-Rb">(3)</a> are <img class="math" src="../_images/math/e190fba87d1a1cb2c899e37c852839e746b18f64.png" alt="r_0=1~{\rm \mu m},~\rho_0=1~{\rm g/cm^3},~E_0=1~{\rm keV}"/>.  The length scale of the Guassian <img class="math" src="../_images/math/011e5790a6c33043ceadca81d9657dde6c61d769.png" alt="\sigma"/> and the distance from the surface <img class="math" src="../_images/math/ec23709387ab2d8ad2147380dc54b1e52de21d24.png" alt="y_0"/> are related to <img class="math" src="../_images/math/6e360a3b0132db086177d0ed677c726498e2e980.png" alt="R_B"/> as <a class="footnote-reference" href="#id4" id="id2">[5]</a>:</p>
+<div class="math">
+<p><img src="../_images/math/1546342b433be3422a1586d1b31e7fc9d291b722.png" alt="\sigma &amp;= \frac{R_B}{\sqrt{15}}\\
+y_0 &amp;= 0.3\times R_B"/></p>
+</div><p>The normalization constant <img class="math" src="../_images/math/0043fe6507e9b1d112e07a2801e24927e267dd50.png" alt="A"/> has units of volume.  The standard normalization of a 2-dimensional Gaussian is <img class="math" src="../_images/math/b6a5852038123aa6976c836013109108a06edc72.png" alt="2\pi\sigma^2"/>, which has units of area.  An appropriate choice for the additional length factor in <img class="math" src="../_images/math/0043fe6507e9b1d112e07a2801e24927e267dd50.png" alt="A"/> is the electron diffusion length <img class="math" src="../_images/math/7a020612a7f71537e03afa1600922f1c2f1c634c.png" alt="L_D"/>, so that:</p>
+<div class="math" id="equation-norm">
+<p><span class="eqno">(4)<a class="headerlink" href="#equation-norm" title="Permalink to this equation">¶</a></span><img src="../_images/math/1db52d97306da8ae5030d51fa74546c7e4ec10ea.png" alt="A &amp;= 2\pi\sigma^2 L_D"/></p>
+</div><p>To code <img class="math" src="../_images/math/6b1526e2a17fab78e5a7b11a952f67b4bd7e0787.png" alt="G(x,y)"/>, Eq. <a class="reference internal" href="#equation-Gxy">(1)</a> we start by making the necessary definitions of constants:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">q</span> <span class="o">=</span> <span class="mf">1.6e-19</span>      <span class="c1"># C</span>
+<span class="n">Ibeam</span> <span class="o">=</span> <span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">12</span>   <span class="c1"># A</span>
+<span class="n">Ebeam</span> <span class="o">=</span> <span class="mi">15</span><span class="n">e3</span>     <span class="c1"># eV</span>
+<span class="n">eg</span> <span class="o">=</span> <span class="mf">1.5</span>         <span class="c1"># eV</span>
+<span class="n">density</span> <span class="o">=</span> <span class="mf">5.85</span>   <span class="c1"># g/cm^3</span>
+<span class="n">kev</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e3</span>        <span class="c1"># eV</span>
+
+<span class="n">Gtot</span> <span class="o">=</span> <span class="n">Ibeam</span><span class="o">/</span><span class="n">q</span> <span class="o">*</span> <span class="n">Ebeam</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">eg</span><span class="p">)</span>
+<span class="n">Rbulb</span> <span class="o">=</span> <span class="mf">0.043</span> <span class="o">/</span> <span class="n">density</span> <span class="o">*</span> <span class="p">(</span><span class="n">Ebeam</span><span class="o">/</span><span class="n">kev</span><span class="p">)</span><span class="o">**</span><span class="mf">1.75</span>     <span class="c1"># given in micron</span>
+<span class="n">Rbulb</span> <span class="o">=</span> <span class="n">Rbulb</span> <span class="o">*</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>                            <span class="c1"># converting to cm</span>
+
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">Rbulb</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>                        <span class="c1"># Gaussian spread</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">Rbulb</span>                                <span class="c1"># penetration depth</span>
+
+<span class="n">Ld</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">mu_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">tau_e</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>  <span class="c1"># diffusion length</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="perfoming-the-beam-scan">
+<h2>3.5.4. Perfoming the beam scan<a class="headerlink" href="#perfoming-the-beam-scan" title="Permalink to this headline">¶</a></h2>
+<p>To scan the lateral position <img class="math" src="../_images/math/307e583980f527b3f26e1e159435e0a8d262736b.png" alt="x_0"/> of the beam, we first define the list of <img class="math" src="../_images/math/307e583980f527b3f26e1e159435e0a8d262736b.png" alt="x_0"/> values:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">x0list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">2.5e-4</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We define an array to store the computed current at each beam position:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">jset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0list</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Next we scan over <img class="math" src="../_images/math/307e583980f527b3f26e1e159435e0a8d262736b.png" alt="x_0"/> with a <code class="docutils literal"><span class="pre">for</span></code> loop.  At each value of <img class="math" src="../_images/math/307e583980f527b3f26e1e159435e0a8d262736b.png" alt="x_0"/>, we define a function as given in Eq. <a class="reference internal" href="#equation-Gxy">(1)</a>, and add this generation to the system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x0list</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">excitation</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Gtot</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">Ld</span><span class="p">)</span> <span class="o">*</span>
+           <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">Ly</span><span class="o">+</span><span class="n">y0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">generation</span><span class="p">(</span><span class="n">excitation</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Using the GUI is more awkward for this type of simulation, because only one variable definition is allowed in the generation function definition.  Therefore all of the numerical prefactors must be computed by the user and input by hand.</p>
+</div>
+<p>Now we solve the system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">solution</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">periodic_bcs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice that we provided the optional input argument <code class="docutils literal"><span class="pre">periodic_bcs=False</span></code> to the <code class="docutils literal"><span class="pre">solve()</span></code> function.  This ensures that the top and bottom boundary conditions are &#8220;hardwall&#8221;.  The default boundary condition is periodic, such that <img class="math" src="../_images/math/0e8088cac81b859f0cb75d5afcb65a207f076260.png" alt="f(x,y=0)=f(x,y=L)"/> for all system properties.</p>
+<p>We obtain the current and store it in the array:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># get analyzer object with which to compute the current</span>
+<span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+<span class="c1"># compute (dimensionless) current and convert to dimension-ful form</span>
+<span class="n">tj</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">full_current</span><span class="p">()</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">current</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+<span class="c1"># save the current</span>
+<span class="n">jset</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tj</span>
+</pre></div>
+</div>
+<p>It can be informative to plot the current normalized to the total generation rate.  The (dimensionless) total generation rate for a simulation is contained in the <code class="docutils literal"><span class="pre">gtot</span></code> field of <code class="docutils literal"><span class="pre">sys</span></code>.  As always, we must use <code class="docutils literal"><span class="pre">scaling</span></code> factors to make this a dimension-ful quantity.  The code for this is shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># obtain total generation from sys object</span>
+<span class="n">gtot</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">gtot</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">generation</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">jratio</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">tj</span><span class="o">/</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="n">gtot</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can also compute the radiative recombination at each beam position point, thereby simulation a cathodoluminesence experiment.  This code shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># compute (dimensionless) total radiative recombination and convert to to   dimension-ful form</span>
+<span class="n">cl</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">integrated_radiative_recombination</span><span class="p">()</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">generation</span> <span class="o">*</span>   <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span>
+<span class="c1"># save the CL</span>
+<span class="n">rset</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">cl</span>
+<span class="n">rad_ratio</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">cl</span><span class="o">/</span><span class="n">gtot</span>
+</pre></div>
+</div>
+<p>The current and CL can be saved and plotted as in previous tutorials.</p>
+<p class="rubric">References</p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[4]</a></td><td><ol class="first last upperalpha simple" start="3">
+<li><ol class="first upperalpha" start="10">
+<li>Wu and D. B. Wittry, J. App. Phys., <strong>49</strong>, 2827,(1978).</li>
+</ol>
+</li>
+</ol>
+</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[5]</a></td><td><ol class="first last upperalpha simple">
+<li><ol class="first upperalpha" start="5">
+<li>Grun, Zeitschrift fur Naturforschung, <strong>12a</strong>, 89, (1957).</li>
+</ol>
+</li>
+</ol>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.5. Tutorial 5: Simulating an EBIC/CL experiment</a><ul>
+<li><a class="reference internal" href="#building-the-system">3.5.1. Building the system</a></li>
+<li><a class="reference internal" href="#adding-surface-recombination">3.5.2. Adding surface recombination</a></li>
+<li><a class="reference internal" href="#electron-beam-excitation">3.5.3. Electron beam excitation</a></li>
+<li><a class="reference internal" href="#perfoming-the-beam-scan">3.5.4. Perfoming the beam scan</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="analysis.html"
+                        title="previous chapter">3.4. Tutorial 4: Saving, loading, and analyzing simulation data</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel.html"
+                        title="next chapter">3.6. Tutorial 6: Batch submission for computing clusters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/tuto_ebic.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="parallel.html" title="3.6. Tutorial 6: Batch submission for computing clusters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="analysis.html" title="3.4. Tutorial 4: Saving, loading, and analyzing simulation data"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

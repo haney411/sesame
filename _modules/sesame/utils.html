@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sesame.utils &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sesame.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 University of Maryland.</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of Sesame. It is subject to the license terms in the file</span>
+<span class="c1"># LICENSE.rst found in the top-level directory of this distribution.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="k">import</span> <span class="n">savemat</span>
+
+<span class="k">def</span> <span class="nf">get_indices</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">site</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># Return the indices of continous coordinates on the discrete lattice</span>
+    <span class="c1"># If site is True, return the site number instead</span>
+    <span class="c1"># Warning: for x=Lx, the site index will be the one before the last one, and</span>
+    <span class="c1"># the same goes for y=Ly and z=Lz.</span>
+    <span class="c1"># p: list containing x,y,z coordinates, use zeros for unused dimensions</span>
+
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="n">xpts</span><span class="p">,</span> <span class="n">ypts</span><span class="p">,</span> <span class="n">zpts</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xpts</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">nx</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">xpts</span><span class="p">[</span><span class="n">xpts</span> <span class="o">&gt;=</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">x</span>
+
+    <span class="k">if</span> <span class="n">ypts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ny</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ypts</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">ny</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">ypts</span><span class="p">[</span><span class="n">ypts</span> <span class="o">&gt;=</span> <span class="n">y</span><span class="p">])</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="n">nx</span><span class="o">*</span><span class="n">y</span>
+
+    <span class="k">if</span> <span class="n">zpts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nz</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">zpts</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">nz</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">zpts</span><span class="p">[</span><span class="n">zpts</span> <span class="o">&gt;=</span> <span class="n">z</span><span class="p">])</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">z</span>
+
+    <span class="k">if</span> <span class="n">site</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_xyz_from_s</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">site</span><span class="p">):</span>
+    <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">site</span> <span class="o">//</span> <span class="p">(</span><span class="n">nx</span> <span class="o">*</span> <span class="n">ny</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">nz</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="p">(</span><span class="n">site</span> <span class="o">-</span> <span class="n">k</span><span class="o">*</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="p">)</span> <span class="o">//</span> <span class="n">nx</span> <span class="o">*</span> <span class="p">(</span><span class="n">ny</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">site</span> <span class="o">-</span> <span class="n">j</span><span class="o">*</span><span class="n">nx</span> <span class="o">-</span> <span class="n">k</span><span class="o">*</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span>
+    <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span>
+
+<span class="k">def</span> <span class="nf">get_dl</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">sites</span><span class="p">):</span>
+    <span class="n">sa</span><span class="p">,</span> <span class="n">sb</span> <span class="o">=</span> <span class="n">sites</span>
+    <span class="n">xa</span><span class="p">,</span> <span class="n">ya</span><span class="p">,</span> <span class="n">za</span> <span class="o">=</span> <span class="n">get_xyz_from_s</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">sa</span><span class="p">)</span>
+    <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">,</span> <span class="n">zb</span> <span class="o">=</span> <span class="n">get_xyz_from_s</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">sb</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">xa</span> <span class="o">!=</span> <span class="n">xb</span><span class="p">:</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">xa</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ya</span> <span class="o">!=</span> <span class="n">yb</span><span class="p">:</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">ya</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">za</span> <span class="o">!=</span> <span class="n">zb</span><span class="p">:</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">dz</span><span class="p">[</span><span class="n">za</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">dl</span>
+
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xcoord</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ycoord</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">Bresenham</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">):</span>
+    <span class="c1"># Compute a digital line contained in the plane (x,y) and passing by the</span>
+    <span class="c1"># points p1 and p2.</span>
+    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">p1</span><span class="p">)</span>
+    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+
+    <span class="n">Dx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">i2</span> <span class="o">-</span> <span class="n">i1</span><span class="p">)</span>    <span class="c1"># distance to travel in X</span>
+    <span class="n">Dy</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">j2</span> <span class="o">-</span> <span class="n">j1</span><span class="p">)</span>    <span class="c1"># distance to travel in Y</span>
+
+    <span class="n">incx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">i1</span> <span class="o">&lt;</span> <span class="n">i2</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="mi">1</span>           <span class="c1"># x will increase at each step</span>
+    <span class="k">elif</span> <span class="n">i1</span> <span class="o">&gt;</span> <span class="n">i2</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>          <span class="c1"># x will decrease at each step</span>
+
+    <span class="n">incy</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">j1</span> <span class="o">&lt;</span> <span class="n">j2</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="mi">1</span>           <span class="c1"># y will increase at each step</span>
+    <span class="k">elif</span> <span class="n">j1</span> <span class="o">&gt;</span> <span class="n">j2</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>          <span class="c1"># y will decrease at each step</span>
+
+    <span class="c1"># take the numerator of the distance of a point to the line</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">abs</span><span class="p">((</span><span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="n">p2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span> <span class="o">+</span> <span class="n">k1</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="p">]</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">icoord</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">jcoord</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span><span class="p">]</span>
+    <span class="n">kcoord</span> <span class="o">=</span> <span class="p">[</span><span class="n">k1</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Dx</span> <span class="o">+</span> <span class="n">Dy</span><span class="p">):</span>
+        <span class="n">e1</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">system</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">incy</span><span class="p">])</span>
+        <span class="n">e2</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">incx</span><span class="p">],</span> <span class="n">system</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">incx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">e1</span> <span class="o">&lt;=</span> <span class="n">e2</span> <span class="c1"># for lines x = constant</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">e1</span> <span class="o">&lt;</span> <span class="n">e2</span>
+        <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
+            <span class="c1"># if j went over the edge, break</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">system</span><span class="o">.</span><span class="n">ny</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">system</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="n">incy</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if i went over the edge, break</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">system</span><span class="o">.</span><span class="n">nx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">system</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="n">incx</span>
+        <span class="n">sites</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span> <span class="o">+</span> <span class="n">k1</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">ny</span><span class="p">)</span>
+        <span class="n">icoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">jcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="n">kcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span>
+
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sites</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sites</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">icoord</span><span class="p">,</span> <span class="n">jcoord</span><span class="p">,</span> <span class="n">kcoord</span>
+
+<span class="k">def</span> <span class="nf">check_plane</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span><span class="p">):</span>
+    <span class="c1"># check if plane is within what can be handled</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Acceptable planes are rectangles with at least one edge parallel &quot;</span> <span class="o">+</span>\
+          <span class="s2">&quot;to either x, or y or z. The rectangles must be defined by two lines &quot;</span> <span class="o">+</span>\
+          <span class="s2">&quot;perpendicular to the z-axis.&quot;</span>
+
+    <span class="c1"># vectors within the plane</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="n">P2</span> <span class="o">-</span> <span class="n">P1</span>
+    <span class="n">v2</span> <span class="o">=</span> <span class="n">P3</span> <span class="o">-</span> <span class="n">P1</span>
+    <span class="n">vperp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span>
+
+    <span class="n">check</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># 1. check if the two lines are perpendicular to th z-axis</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v2</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The lines defining the plane defects defined by the four points &quot;</span>\
+            <span class="o">+</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">, </span><span class="si">{2}</span><span class="s2">, </span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span> <span class="o">+</span>\
+            <span class="s2">&quot; are not perpendicular to the z-axis.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 2. check if the plane is a rectangle</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="p">(</span><span class="n">P1</span> <span class="o">+</span> <span class="n">P2</span> <span class="o">+</span> <span class="n">P3</span> <span class="o">+</span> <span class="n">P4</span><span class="p">)</span> <span class="o">/</span> <span class="mf">4.</span>  <span class="c1"># compute center of the figure</span>
+    <span class="n">d1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">P1</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">d2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">P2</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">d3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">P3</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">d4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">P4</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">d</span><span class="o">-</span><span class="n">d1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">15</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="n">d3</span><span class="p">,</span> <span class="n">d4</span><span class="p">)):</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The plane defects defined by the four points &quot;</span> <span class="o">+</span>\
+              <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">, </span><span class="si">{2}</span><span class="s2">, </span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span> <span class="o">+</span>\
+              <span class="s2">&quot; is not a rectangle.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 3. check if the plane is parallel to at least one axis</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vperp</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">30</span> <span class="ow">and</span>\
+        <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vperp</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">30</span> <span class="ow">and</span>\
+        <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vperp</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">30</span>
+    <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">check</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The plane defects defined by the four points &quot;</span> <span class="o">+</span>\
+              <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2">, </span><span class="si">{2}</span><span class="s2">, </span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span> <span class="o">+</span>\
+              <span class="s2">&quot; is not a parallel to at least one main axis.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">check</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_point_defects_sites</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="c1"># find the site closest to a given point</span>
+    <span class="n">xa</span> <span class="o">=</span> <span class="n">location</span>
+    <span class="n">ia</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">ia</span>
+    <span class="n">perp_dl</span> <span class="o">=</span> <span class="n">system</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">ia</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">sites</span><span class="p">,</span> <span class="n">perp_dl</span>
+
+
+
+<span class="k">def</span> <span class="nf">get_line_defects_sites</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="c1"># find the sites closest to the straight line defined by</span>
+    <span class="c1"># (xa,ya,za) and (xb,yb,zb) </span>
+
+    <span class="n">xa</span><span class="p">,</span> <span class="n">ya</span> <span class="o">=</span> <span class="n">location</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="o">=</span> <span class="n">location</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">ia</span><span class="p">,</span> <span class="n">ja</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="p">(</span><span class="n">xa</span><span class="p">,</span> <span class="n">ya</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">ib</span><span class="p">,</span> <span class="n">jb</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="p">(</span><span class="n">xb</span><span class="p">,</span> <span class="n">yb</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="n">Dx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ib</span> <span class="o">-</span> <span class="n">ia</span><span class="p">)</span>    <span class="c1"># distance to travel in X</span>
+    <span class="n">Dy</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">jb</span> <span class="o">-</span> <span class="n">ja</span><span class="p">)</span>    <span class="c1"># distance to travel in Y</span>
+    <span class="k">if</span> <span class="n">ia</span> <span class="o">&lt;</span> <span class="n">ib</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="mi">1</span>           <span class="c1"># x will increase at each step</span>
+    <span class="k">elif</span> <span class="n">ia</span> <span class="o">&gt;</span> <span class="n">ib</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>          <span class="c1"># x will decrease at each step</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">ja</span> <span class="o">&lt;</span> <span class="n">jb</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="mi">1</span>           <span class="c1"># y will increase at each step</span>
+    <span class="k">elif</span> <span class="n">ja</span> <span class="o">&gt;</span> <span class="n">jb</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>          <span class="c1"># y will decrease at each step</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># take the numerator of the distance of a point to the line</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">abs</span><span class="p">((</span><span class="n">yb</span><span class="o">-</span><span class="n">ya</span><span class="p">)</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="n">xb</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="n">xb</span><span class="o">*</span><span class="n">ya</span> <span class="o">-</span> <span class="n">yb</span><span class="o">*</span><span class="n">xa</span><span class="p">)</span>
+
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">ia</span><span class="p">,</span> <span class="n">ja</span>
+    <span class="n">perp_dl</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Dx</span> <span class="o">+</span> <span class="n">Dy</span><span class="p">):</span>
+        <span class="n">e1</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">system</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">incy</span><span class="p">])</span>
+        <span class="n">e2</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">incx</span><span class="p">],</span> <span class="n">system</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">incx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">e1</span> <span class="o">&lt;=</span> <span class="n">e2</span> <span class="c1"># for lines x = constant</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">condition</span> <span class="o">=</span> <span class="n">e1</span> <span class="o">&lt;</span> <span class="n">e2</span>
+        <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="n">incy</span>
+            <span class="n">perp_dl</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">system</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">system</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span>  
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="n">incx</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dy</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">j</span><span class="p">):</span>
+                <span class="n">perp_dl</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">system</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">system</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># we&#39;ve assumed abrupt boundary conditions along y-direction!</span>
+                <span class="n">perp_dl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">system</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">sites</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">system</span><span class="o">.</span><span class="n">nx</span><span class="p">)</span>
+    <span class="n">perp_dl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perp_dl</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">perp_dl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">perp_dl</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sites</span><span class="p">,</span> <span class="n">perp_dl</span>
+
+
+<span class="k">def</span> <span class="nf">plane_defects_sites</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get sites and coordinates of the locations containing additional charges</span>
+<span class="sd">    distributed on a plane.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    sys: Builder</span>
+<span class="sd">        The discretized system.</span>
+<span class="sd">    location: list of four array_like coordinates [(x1, y1, z1), (x2, y2, z2), (x3, y3, z3), (x4, y4, z4)]</span>
+<span class="sd">        The coordinates in [m] define a plane of defects in 3D. The first two</span>
+<span class="sd">        coordinates define a line that must be parallel to the line defined by</span>
+<span class="sd">        the last two points.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    s: numpy array of integers</span>
+<span class="sd">        Sites numbers.</span>
+<span class="sd">    xccord: numpy array of floats</span>
+<span class="sd">        Grid of the x-coordinates of the sites [m].</span>
+<span class="sd">    yccord: numpy array of floats</span>
+<span class="sd">        Grid of the y-coordinates of the sites [m].</span>
+<span class="sd">    perp_dl: numpy array of floats</span>
+<span class="sd">        Lattice constants localy orthogonal to the plane.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This only works in 3D.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># transform points into numpy arrays if not the case</span>
+        
+    <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="k">for</span> <span class="n">P</span> <span class="ow">in</span> <span class="n">location</span><span class="p">]</span>
+
+    <span class="c1"># check plane first</span>
+    <span class="n">check_plane</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">,</span> <span class="n">P3</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+
+    <span class="c1"># points indices on the grid</span>
+    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">P1</span><span class="p">)</span>
+    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+    <span class="c1"># check if the two lines are in the same sense, if not, flip the second line</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">P2</span> <span class="o">-</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P4</span> <span class="o">-</span> <span class="n">P3</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">i3</span><span class="p">,</span> <span class="n">j3</span><span class="p">,</span> <span class="n">k3</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">P3</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">i3</span><span class="p">,</span> <span class="n">j3</span><span class="p">,</span> <span class="n">k3</span> <span class="o">=</span> <span class="n">get_indices</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">P4</span><span class="p">)</span>
+
+    <span class="c1">## vector perpendicular to the plane</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">P2</span> <span class="o">-</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P3</span> <span class="o">-</span> <span class="n">P1</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="o">-</span><span class="n">A</span><span class="o">*</span><span class="n">P1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">B</span><span class="o">*</span><span class="n">P1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span><span class="o">*</span><span class="n">P1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">error</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">A</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">B</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="n">C</span><span class="o">*</span><span class="n">z</span> <span class="o">+</span> <span class="n">D</span><span class="p">)</span>
+    
+    <span class="n">Dx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">i3</span> <span class="o">-</span> <span class="n">i1</span><span class="p">)</span>    <span class="c1"># distance to travel in X</span>
+    <span class="n">Dy</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">j3</span> <span class="o">-</span> <span class="n">j1</span><span class="p">)</span>    <span class="c1"># distance to travel in Y</span>
+    <span class="n">Dz</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">k3</span> <span class="o">-</span> <span class="n">k1</span><span class="p">)</span>    <span class="c1"># distance to travel in Z</span>
+    <span class="n">travel</span> <span class="o">=</span> <span class="n">Dx</span> <span class="o">+</span> <span class="n">Dy</span> <span class="o">+</span> <span class="n">Dz</span>
+
+    <span class="c1"># increment in x</span>
+    <span class="n">incx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">i1</span> <span class="o">&lt;</span> <span class="n">i3</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">i1</span> <span class="o">&gt;</span> <span class="n">i3</span><span class="p">:</span>
+        <span class="n">incx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># increment in y</span>
+    <span class="n">incy</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">j1</span> <span class="o">&lt;</span> <span class="n">j3</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">j1</span> <span class="o">&gt;</span> <span class="n">j3</span><span class="p">:</span>
+        <span class="n">incy</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># increment in z</span>
+    <span class="n">incz</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">k1</span> <span class="o">&lt;</span> <span class="n">k3</span><span class="p">:</span>
+        <span class="n">incz</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">k1</span> <span class="o">&gt;</span> <span class="n">k3</span><span class="p">:</span>
+        <span class="n">incz</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+       
+    <span class="n">sites</span><span class="p">,</span> <span class="n">xcoord</span><span class="p">,</span> <span class="n">ycoord</span><span class="p">,</span> <span class="n">zcoord</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">perp_dl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+
+    <span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ic</span><span class="p">,</span> <span class="n">jc</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">Bresenham</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="p">)</span>
+
+    <span class="n">sites</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">xcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">ic</span><span class="p">])</span>
+    <span class="n">ycoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">jc</span><span class="p">])</span>
+    <span class="n">zcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">kc</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">travel</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># find the coordinates of the next line</span>
+        <span class="n">e1</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i1</span><span class="o">+</span><span class="n">incx</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">k1</span><span class="p">])</span>
+        <span class="n">e2</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j1</span><span class="o">+</span><span class="n">incy</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">k1</span><span class="p">])</span>
+        <span class="n">e3</span> <span class="o">=</span> <span class="n">error</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">k1</span><span class="o">+</span><span class="n">incz</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">incz</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e1</span> <span class="o">&lt;</span> <span class="n">e2</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">i2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">incx</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span> <span class="o">+</span> <span class="n">incx</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">j2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">incy</span><span class="p">,</span> <span class="n">k1</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">+</span> <span class="n">incy</span><span class="p">,</span> <span class="n">k2</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+
+        <span class="k">if</span> <span class="n">incy</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">incx</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e1</span> <span class="o">==</span> <span class="n">e3</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">incz</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">e1</span> <span class="o">&lt;</span> <span class="n">e3</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">i2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span> <span class="o">+</span> <span class="n">incx</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span> <span class="o">+</span> <span class="n">incx</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dz</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dz</span><span class="p">[</span><span class="n">k1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">k2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">+</span> <span class="n">incz</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">+</span> <span class="n">incz</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+
+        <span class="k">if</span> <span class="n">incx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">incy</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e2</span> <span class="o">==</span> <span class="n">e3</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">incz</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="n">e2</span> <span class="o">&lt;</span> <span class="n">e3</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">j2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">incy</span><span class="p">,</span> <span class="n">k1</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">+</span> <span class="n">incy</span><span class="p">,</span> <span class="n">k2</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dz</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dz</span><span class="p">[</span><span class="n">k1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">k2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">+</span> <span class="n">incz</span>
+                    <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">+</span> <span class="n">incz</span>
+                    <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span> <span class="c1">#and repeat that</span>
+
+        <span class="k">if</span> <span class="n">incx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">incy</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k1</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">k2</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">j1</span><span class="p">,</span> <span class="n">k1</span> <span class="o">+</span> <span class="n">incz</span>
+                <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">=</span> <span class="n">i2</span><span class="p">,</span> <span class="n">j2</span><span class="p">,</span> <span class="n">k2</span> <span class="o">+</span> <span class="n">incz</span>
+            <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">j2</span><span class="p">:</span>
+                <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dy</span><span class="p">[</span><span class="n">j1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="k">if</span> <span class="n">i1</span> <span class="o">==</span> <span class="n">i2</span><span class="p">:</span>
+                <span class="n">dl</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="p">]</span> <span class="o">+</span> <span class="n">sys</span><span class="o">.</span><span class="n">dx</span><span class="p">[</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span>
+
+        <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">i2</span><span class="p">]</span>
+        <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">j2</span><span class="p">]</span>
+        <span class="n">z1</span><span class="p">,</span> <span class="n">z2</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">k1</span><span class="p">],</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">k2</span><span class="p">]</span>
+
+        <span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ic</span><span class="p">,</span> <span class="n">jc</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">Bresenham</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">z1</span><span class="p">),</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">z2</span><span class="p">))</span>
+
+        <span class="n">sites</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">xcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="n">ic</span><span class="p">])</span>
+        <span class="n">ycoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="n">jc</span><span class="p">])</span>
+        <span class="n">zcoord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="n">kc</span><span class="p">])</span>
+
+        <span class="c1"># replicate perp_dl for all sites on the line</span>
+        <span class="n">perp_dl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">perp_dl</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dl</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))))</span>
+
+    <span class="n">xcoord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xcoord</span><span class="p">)</span>
+    <span class="n">ycoord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ycoord</span><span class="p">)</span>
+    <span class="n">zcoord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zcoord</span><span class="p">)</span>
+    <span class="n">perp_dl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">perp_dl</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dl</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">))))</span>
+    <span class="k">return</span> <span class="n">sites</span><span class="p">,</span> <span class="n">xcoord</span><span class="p">,</span> <span class="n">ycoord</span><span class="p">,</span> <span class="n">zcoord</span><span class="p">,</span> <span class="n">perp_dl</span>
+
+<div class="viewcode-block" id="save_sim"><a class="viewcode-back" href="../../reference/generated/sesame.utils.save_sim.html#sesame.utils.save_sim">[docs]</a><span class="k">def</span> <span class="nf">save_sim</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;npy&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Utility function that saves a system together with simulation results.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sys: Builder</span>
+<span class="sd">        The discretized system.</span>
+<span class="sd">    result: dictionary</span>
+<span class="sd">        Dictionary of solution, containing &#39;v&#39;, &#39;efn&#39;, &#39;efp&#39;</span>
+<span class="sd">    filename: string</span>
+<span class="sd">        Name of outputfile</span>
+<span class="sd">    fmt: string</span>
+<span class="sd">        Format of output file, set to &#39;mat&#39; for matlab files. With the default</span>
+<span class="sd">        numpy format, the Builder object is saved directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">fmt</span><span class="o">==</span><span class="s1">&#39;mat&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xpts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">Eg</span><span class="p">,</span> <span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">Nc</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">Nv</span><span class="p">,</span> \
+                  <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">bl</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">mu_e</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">mu_h</span><span class="p">,</span> \
+                  <span class="s1">&#39;m_e&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">mass_e</span><span class="p">,</span> <span class="s1">&#39;m_h&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">mass_h</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">tau_e</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">tau_h</span><span class="p">,</span> \
+                  <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="s1">&#39;Cn&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">Cn</span><span class="p">,</span> <span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">Cp</span><span class="p">,</span> <span class="s1">&#39;n1&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">n1</span><span class="p">,</span> <span class="s1">&#39;p1&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">p1</span><span class="p">,</span> <span class="s1">&#39;ni&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">ni</span><span class="p">,</span> <span class="s1">&#39;rho&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">rho</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xpts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="s1">&#39;ypts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">}</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">],</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;efn&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;efn&#39;</span><span class="p">],</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;efp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;efp&#39;</span><span class="p">],</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">sys</span><span class="p">):</span>
+                <span class="n">tfield</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                <span class="c1"># determine if element is an array of proper size</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tfield</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">tfield</span><span class="p">)</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="o">*</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">):</span>
+                        <span class="n">tdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tfield</span><span class="p">,</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>
+                        <span class="n">system</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">attr</span><span class="p">:</span> <span class="n">tdata</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+            <span class="n">system</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xpts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="s1">&#39;ypts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">,</span> <span class="s1">&#39;zpts&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">}</span>
+
+
+        <span class="n">savemat</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;sys&#39;</span><span class="p">:</span> <span class="n">system</span><span class="p">,</span> <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">result</span><span class="p">},</span> <span class="n">do_compression</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">((</span><span class="n">sys</span><span class="p">,</span> <span class="n">result</span><span class="p">)))</span>
+        <span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="load_sim"><a class="viewcode-back" href="../../reference/generated/sesame.utils.load_sim.html#sesame.utils.load_sim">[docs]</a><span class="k">def</span> <span class="nf">load_sim</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Utility function that loads a system together with simulation results.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename: string</span>
+<span class="sd">        Name of inputfile</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    system: Builder object</span>
+<span class="sd">        A discritized system.</span>
+<span class="sd">    result: dictionary</span>
+<span class="sd">        Dictionary containing 1D arrays of electron and hole quasi-Fermi levels</span>
+<span class="sd">        and the electrostatic potential across the system. Keys are &#39;efn&#39;,</span>
+<span class="sd">        &#39;efp&#39;, and/or &#39;v&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">sys</span><span class="p">,</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sys</span><span class="p">,</span> <span class="n">result</span></div>
+
+
+<span class="k">def</span> <span class="nf">check_equal_sim_settings</span><span class="p">(</span><span class="n">system1</span><span class="p">,</span> <span class="n">system2</span><span class="p">):</span>
+
+    <span class="c1"># cycle over all elements of system2</span>
+    <span class="n">equivalent</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">system2</span><span class="p">):</span>
+        <span class="c1"># don&#39;t compare G matrices</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">tfield</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">system2</span><span class="p">,</span><span class="n">attr</span><span class="p">)</span>
+        <span class="c1"># determine if element is an array</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tfield</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="n">tfield1</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">system1</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">tfield</span><span class="p">,</span> <span class="n">tfield1</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">equivalent</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">equivalent</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

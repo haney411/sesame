@@ -1,0 +1,6 @@
+sesame\.utils\.load\_sim
+========================
+
+.. currentmodule:: sesame.utils
+
+.. autofunction:: load_sim

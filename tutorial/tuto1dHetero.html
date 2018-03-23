@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.2. Tutorial 2: I-V curve of a one-dimensional pn heterojunction &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.3. Tutorial 3: Two-dimensional pn junction with a grain boundary" href="2d_system.html" />
+    <link rel="prev" title="3.1. Tutorial 1: I-V curve of a one-dimensional pn homojunction" href="tuto1.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-2-i-v-curve-of-a-one-dimensional-pn-heterojunction">
+<h1>3.2. Tutorial 2: I-V curve of a one-dimensional <em>pn</em> heterojunction<a class="headerlink" href="#tutorial-2-i-v-curve-of-a-one-dimensional-pn-heterojunction" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we consider a more complex system in 1-dimension: a heterojunction with a Schottky back contact.  The n-type material is CdS and the p-type material is CdTe.  The structure of the script is the same as in the last tutorial, however we must provide more detail to describe a more complex system.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">1d_heterojunction.py</span></code> located in the
+<code class="docutils literal"><span class="pre">examples\tutorial2</span></code> directory of the distribution.  The same simulation&#8217;s GUI input file is <code class="docutils literal"><span class="pre">1d_heterojunction.ini</span></code>, also located in the <code class="docutils literal"><span class="pre">examples\tutorial2</span></code> directory.</p>
+</div>
+<p>The band diagram for this
+system under short-circuit conditions is shown below
+.</p>
+<div align="center" class="align-center"><img alt="../_images/hetero_bands.svg" src="../_images/hetero_bands.svg" /></div>
+<div class="section" id="constructing-a-grid-and-building-the-system">
+<h2>3.2.1. Constructing a grid and building the system<a class="headerlink" href="#constructing-a-grid-and-building-the-system" title="Permalink to this headline">¶</a></h2>
+<p>We first define the thicknesses of the n-type and p-type regions:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">t1</span> <span class="o">=</span> <span class="mi">25</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span>    <span class="c1"># thickness of CdS</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>     <span class="c1"># thickness of CdTe</span>
+</pre></div>
+</div>
+<p>The mesh for a heterojunction should be very fine in the immediate vicinity of the materials interface.  We define a distance <code class="docutils literal"><span class="pre">dd</span></code>, which determines the thickness of the highly-refined mesh near an interface.  We form the overall system mesh by concatenating meshes for different parts of the system as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">dd</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span> <span class="c1"># 2*dd is the distance over which mesh is highly refined</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dd</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>                <span class="c1"># L contact interface</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">dd</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>                    <span class="c1"># material 1</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">dd</span><span class="p">,</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">dd</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>             <span class="c1"># interface 1</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t1</span> <span class="o">+</span> <span class="n">dd</span><span class="p">,</span> <span class="p">(</span><span class="n">t1</span><span class="o">+</span><span class="n">t2</span><span class="p">)</span> <span class="o">-</span> <span class="n">dd</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>       <span class="c1"># material 2</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">((</span><span class="n">t1</span><span class="o">+</span><span class="n">t2</span><span class="p">)</span> <span class="o">-</span> <span class="n">dd</span><span class="p">,</span> <span class="p">(</span><span class="n">t1</span><span class="o">+</span><span class="n">t2</span><span class="p">),</span> <span class="mi">10</span><span class="p">)))</span>                       <span class="c1"># R contact interface</span>
+</pre></div>
+</div>
+<p>As before we make a system with <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-material-properties">
+<h2>3.2.2. Adding material properties<a class="headerlink" href="#adding-material-properties" title="Permalink to this headline">¶</a></h2>
+<p>We make functions to define the n-type and p-type regions as in the last tutorial:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">CdS_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">&lt;=</span><span class="n">t1</span>
+
+<span class="k">def</span> <span class="nf">CdTe_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">&gt;</span><span class="n">t1</span>
+</pre></div>
+</div>
+<p>Now we add materials to our system.  We define two dictionaries to describe the two material types:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CdS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mf">2.2e18</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span><span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span><span class="mf">2.4</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">13</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="mf">4.</span><span class="p">}</span>
+
+<span class="n">CdTe</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span><span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span><span class="mf">9.4</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span><span class="mi">320</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span><span class="mi">40</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span><span class="mi">5</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span><span class="mi">5</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="mf">3.9</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>As in the last tutorial, we add materials using the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_material" title="sesame.builder.Builder.add_material"><code class="xref py py-func docutils literal"><span class="pre">add_material()</span></code></a>.  This time we specify the material location using the functions we defined above as additional input arguments to <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_material" title="sesame.builder.Builder.add_material"><code class="xref py py-func docutils literal"><span class="pre">add_material()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">CdS</span><span class="p">,</span> <span class="n">CdS_region</span><span class="p">)</span>     <span class="c1"># adding CdS</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">CdTe</span><span class="p">,</span> <span class="n">CdTe_region</span><span class="p">)</span>     <span class="c1"># adding CdTe</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-dopants">
+<h2>3.2.3. Adding dopants<a class="headerlink" href="#adding-dopants" title="Permalink to this headline">¶</a></h2>
+<p>Adding the dopants works as in the last tutorial:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">nD</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span>  <span class="c1"># donor density [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_donor</span><span class="p">(</span><span class="n">nD</span><span class="p">,</span> <span class="n">CdS_region</span><span class="p">)</span>
+<span class="n">nA</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e15</span>  <span class="c1"># acceptor density [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_acceptor</span><span class="p">(</span><span class="n">nA</span><span class="p">,</span> <span class="n">CdTe_region</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="specifying-contact-types">
+<h2>3.2.4. Specifying contact types<a class="headerlink" href="#specifying-contact-types" title="Permalink to this headline">¶</a></h2>
+<p>Next, we&#8217;ll add a left Ohmic contact and a right Schottky contact.  For Schottky contacts, we must to specify the work function of the metal.  As in the previous tutorial, we add contacts to the system using the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.contact_type" title="sesame.builder.Builder.contact_type"><code class="xref py py-func docutils literal"><span class="pre">contact_type()</span></code></a>; however this time we provide the additional arguments of the left and right contact work functions to <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.contact_type" title="sesame.builder.Builder.contact_type"><code class="xref py py-func docutils literal"><span class="pre">contact_type()</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Lcontact_type</span><span class="p">,</span> <span class="n">Rcontact_type</span> <span class="o">=</span> <span class="s1">&#39;Ohmic&#39;</span><span class="p">,</span> <span class="s1">&#39;Schottky&#39;</span>
+<span class="n">Lcontact_workFcn</span><span class="p">,</span> <span class="n">Rcontact_workFcn</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">5.0</span>   <span class="c1"># eV</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_type</span><span class="p">(</span><span class="n">Lcontact_type</span><span class="p">,</span> <span class="n">Rcontact_type</span><span class="p">,</span> <span class="n">Lcontact_workFcn</span><span class="p">,</span> <span class="n">Rcontact_workFcn</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that for Ohmic contacts, the metal work function doesn&#8217;t enter into the problem, so its value is unimportant - we therefore simply set the left contact work function equal to 0.
+Having defined the contact types, we next specify the contact recombination velocities as before.  For this system, we&#8217;ll assume the contacts are non-selective:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span>  <span class="c1"># cm/s</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_S</span><span class="p">(</span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="computing-an-i-v-curve">
+<h2>3.2.5. Computing an I-V curve<a class="headerlink" href="#computing-an-i-v-curve" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ve now completed the system definition.  As in the last example, we compute the equilibrium solution, add illumination, and compute the I-V curve</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Sesame does not include interface transport mechanisms of       thermionic emission and tunneling.</p>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">eqsolution</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">solve_equilibrium</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+
+<span class="n">phi</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e21</span> <span class="c1"># photon flux [1/(cm^2 s)]</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="mf">2.3e6</span> <span class="c1"># absorption coefficient [1/cm]</span>
+
+<span class="c1"># Define a function for the generation rate</span>
+<span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">phi</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">generation</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="n">voltages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">IVcurve</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="n">eqsolution</span><span class="p">,</span> <span class="s1">&#39;1dhetero_V&#39;</span><span class="p">)</span>
+<span class="c1"># convert dimensionless current to dimension-ful current</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">current</span>
+</pre></div>
+</div>
+<p>The current can be saved and plotted as in the previous tutorial:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v&#39;</span><span class="p">:</span><span class="n">voltages</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">:</span><span class="n">j</span><span class="p">}</span>   <span class="c1"># store j, v values</span>
+<span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;jv1d_hetero&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>    <span class="c1"># save the j-v curve</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">voltages</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span><span class="s1">&#39;-o&#39;</span><span class="p">)</span>        <span class="c1"># plot j-v curve</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Voltage [V]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Current [A/cm^2]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>                       <span class="c1"># show grid lines</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>                       <span class="c1"># show plot</span>
+</pre></div>
+</div>
+<div align="center" class="align-center"><img alt="../_images/jv_hetero.svg" src="../_images/jv_hetero.svg" /></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.2. Tutorial 2: I-V curve of a one-dimensional <em>pn</em> heterojunction</a><ul>
+<li><a class="reference internal" href="#constructing-a-grid-and-building-the-system">3.2.1. Constructing a grid and building the system</a></li>
+<li><a class="reference internal" href="#adding-material-properties">3.2.2. Adding material properties</a></li>
+<li><a class="reference internal" href="#adding-dopants">3.2.3. Adding dopants</a></li>
+<li><a class="reference internal" href="#specifying-contact-types">3.2.4. Specifying contact types</a></li>
+<li><a class="reference internal" href="#computing-an-i-v-curve">3.2.5. Computing an I-V curve</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tuto1.html"
+                        title="previous chapter">3.1. Tutorial 1: I-V curve of a one-dimensional <em>pn</em> homojunction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="2d_system.html"
+                        title="next chapter">3.3. Tutorial 3: Two-dimensional <em>pn</em> junction with a grain boundary</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/tuto1dHetero.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="2d_system.html" title="3.3. Tutorial 3: Two-dimensional pn junction with a grain boundary"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tuto1.html" title="3.1. Tutorial 1: I-V curve of a one-dimensional pn homojunction"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

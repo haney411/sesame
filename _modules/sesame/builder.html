@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sesame.builder &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sesame.builder</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 University of Maryland.</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of Sesame. It is subject to the license terms in the file</span>
+<span class="c1"># LICENSE.rst found in the top-level directory of this distribution.</span>
+
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">InterpolatedUnivariateSpline</span> <span class="k">as</span> <span class="n">spline</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.constants</span> <span class="k">as</span> <span class="nn">cts</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">product</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="c1"># named tuple of the characteristics of a defect</span>
+<span class="n">defect</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;defect&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;sites&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> \
+                               <span class="s1">&#39;dos&#39;</span><span class="p">,</span> <span class="s1">&#39;energy&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma_e&#39;</span><span class="p">,</span> <span class="s1">&#39;sigma_h&#39;</span><span class="p">,</span>\
+                               <span class="s1">&#39;transition&#39;</span><span class="p">,</span> <span class="s1">&#39;perp_dl&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Scaling"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Scaling">[docs]</a><span class="k">class</span> <span class="nc">Scaling</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An object defining the scalings of the drift-diffusion-Poisson equation. The</span>
+<span class="sd">    temperature of the system and the reference unit for lengths are specified</span>
+<span class="sd">    when an instance is created. The default unit for length is cm, and the</span>
+<span class="sd">    default temperature is 300 K.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_length: string</span>
+<span class="sd">        Reference unit for lengths. Acceptable entries are &#39;cm&#39; for centimeters</span>
+<span class="sd">        and &#39;m&#39; for meters.</span>
+<span class="sd">    T: float</span>
+<span class="sd">        Temperature for the simulation.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    denisty: float</span>
+<span class="sd">        Density scale taken equal to 10\ :sup:`19` cm\ :sup:`-3`.</span>
+<span class="sd">    energy: float</span>
+<span class="sd">        Energy scale.</span>
+<span class="sd">    mobility: float</span>
+<span class="sd">        Mobility scale taken equal to 1 cm\ :sup:`2`/(V.s).</span>
+<span class="sd">    time: float</span>
+<span class="sd">        Time scale.</span>
+<span class="sd">    length: float</span>
+<span class="sd">        Length scale.</span>
+<span class="sd">    generation: float</span>
+<span class="sd">        Scale of generation and recombination rates.</span>
+<span class="sd">    velocity: float</span>
+<span class="sd">        Velocity scale.</span>
+<span class="sd">    current: float</span>
+<span class="sd">        Electrical current density scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+        <span class="c1"># densities</span>
+        <span class="k">if</span> <span class="n">input_length</span> <span class="o">==</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e19</span> <span class="o">*</span> <span class="mi">1</span><span class="n">e6</span> <span class="c1"># [m^-3]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e19</span> <span class="c1"># [cm^-3]</span>
+        <span class="c1"># energies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="n">cts</span><span class="o">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">T</span> <span class="o">/</span> <span class="n">cts</span><span class="o">.</span><span class="n">e</span>
+        <span class="c1"># mobilities</span>
+        <span class="k">if</span> <span class="n">input_length</span> <span class="o">==</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span> <span class="c1"># [m^2 / (V.s)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># [cm^2 / (V.s)]</span>
+        <span class="c1"># time [s]</span>
+        <span class="k">if</span> <span class="n">input_length</span> <span class="o">==</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">cts</span><span class="o">.</span><span class="n">epsilon_0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="n">cts</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span> <span class="c1"># s</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">cts</span><span class="o">.</span><span class="n">epsilon_0</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="n">cts</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span>  <span class="c1"># s</span>
+        <span class="c1"># lengths </span>
+        <span class="k">if</span> <span class="n">input_length</span> <span class="o">==</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cts</span><span class="o">.</span><span class="n">epsilon_0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="p">(</span><span class="n">cts</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">))</span> <span class="c1"># m</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cts</span><span class="o">.</span><span class="n">epsilon_0</span><span class="o">*</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">/</span> <span class="p">(</span><span class="n">cts</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">))</span>  <span class="c1"># cm</span>
+        <span class="c1"># generation rate [m^-3 s^-1]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generation</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">**</span><span class="mi">2</span> 
+        <span class="c1"># recombination velocities</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="c1"># current</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">cts</span><span class="o">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span></div>
+
+
+
+<div class="viewcode-block" id="Builder"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder">[docs]</a><span class="k">class</span> <span class="nc">Builder</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A system discretized on a mesh. </span>
+
+<span class="sd">    This type discretizes a system on a mesh provided by the user, and takes</span>
+<span class="sd">    care of all normalizations. The temperature of the system is specified when</span>
+<span class="sd">    an instance is created. The default is 300 K. </span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xpts, ypts, zpts: numpy arrays of floats</span>
+<span class="sd">        Mesh with original dimensions.</span>
+<span class="sd">    input_length: string</span>
+<span class="sd">        Reference unit for lengths. Acceptable entries are &#39;cm&#39; for centimeters</span>
+<span class="sd">        and &#39;m&#39; for meters.</span>
+<span class="sd">    T: float</span>
+<span class="sd">        Temperature for the simulation.</span>
+
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xpts, ypts, zpts: numpy arrays of floats</span>
+<span class="sd">        Mesh with original dimensions.</span>
+<span class="sd">    dx, dy, dz: numpy arrays of floats</span>
+<span class="sd">        Dimensionless lattice constants in the x, y, z directions.</span>
+<span class="sd">    nx, ny, nz: integers</span>
+<span class="sd">        Number of lattice nodes in the x, y, z directions.</span>
+<span class="sd">    Nc, Nv: numpy arrays of floats</span>
+<span class="sd">        Dimensionless effective densities of states of the conduction and</span>
+<span class="sd">        valence bands.</span>
+<span class="sd">    Eg: numpy array of floats</span>
+<span class="sd">        Dimensionless band gap.</span>
+<span class="sd">    ni: numpy array of floats</span>
+<span class="sd">        Dimensionless intrinsic density.</span>
+<span class="sd">    mu_e, mu_h:  numpy arrays of floats</span>
+<span class="sd">        Dimensionless mobilities of electron and holes.</span>
+<span class="sd">    tau_e, tau_h:  numpy arrays of floats</span>
+<span class="sd">        Dimensionless bulk lifetime for electrons and holes.</span>
+<span class="sd">    n1, p1:  numpy arrays of floats</span>
+<span class="sd">        Dimensionless equilibrium densities of electrons and holes at the bulk trap state.</span>
+<span class="sd">    bl: numpy array of floats</span>
+<span class="sd">        Electron affinity.</span>
+<span class="sd">    g: numpy array of floats</span>
+<span class="sd">        Dimensionless generation for each site of the</span>
+<span class="sd">        system. This is defined only if a generation profile was provided when</span>
+<span class="sd">        building the system.</span>
+<span class="sd">    gtot: float</span>
+<span class="sd">        Dimensionless integral of the generation rate.</span>
+<span class="sd">    defects_list: list of named tuples</span>
+<span class="sd">        List of named tuples containing the characteristics ofthe defects in the</span>
+<span class="sd">        order they were added to the system. The field names are sites,</span>
+<span class="sd">        location, dos, energy, sigma_e, sigma_h, transition, perp_dl.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xpts</span><span class="p">,</span> <span class="n">ypts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zpts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="s1">&#39;cm&#39;</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">300</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span> <span class="o">=</span> <span class="n">Scaling</span><span class="p">(</span><span class="n">input_length</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_length</span> <span class="o">=</span> <span class="n">input_length</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span> <span class="o">=</span> <span class="n">xpts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xpts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nx</span> <span class="o">=</span> <span class="n">xpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span> <span class="o">=</span> <span class="n">ypts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ny</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">ypts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span> <span class="o">=</span> <span class="n">ypts</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ypts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ny</span> <span class="o">=</span> <span class="n">ypts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">zpts</span> <span class="o">=</span> <span class="n">zpts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nz</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">zpts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zpts</span> <span class="o">=</span> <span class="n">zpts</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zpts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">zpts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nz</span> <span class="o">=</span> <span class="n">zpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="mi">3</span>
+
+        <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nc</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Eg</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass_e</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass_h</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_e</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_h</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_e</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_h</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n1</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p1</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bl</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cn</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cp</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Etrap</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">defects_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Builder.add_material"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_material">[docs]</a>    <span class="k">def</span> <span class="nf">add_material</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a material to the system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mat: dictionary </span>
+<span class="sd">            Contains the material parameters Keys are Nc (Nv): conduction</span>
+<span class="sd">            (valence) effective densities of states [cm\ :sup:`-3`], Eg: band</span>
+<span class="sd">            gap [:math:`\mathrm{eV}`], epsilon: material&#39;s permitivitty, mu_e</span>
+<span class="sd">            (mu_h): electron (hole) mobility [m\ :sup:`2`/(V s)], tau_e (tau_h):</span>
+<span class="sd">            electron (hole) bulk lifetime [s], Et: energy level of the bulk</span>
+<span class="sd">            recombination centers [eV], affinity: electron affinity [eV], B:</span>
+<span class="sd">            radiation recombination constant [cm\ :sup:`3`/s], Cn (Cp): Auger</span>
+<span class="sd">            recombination constant for electrons (holes) [cm\ :sup:`6`/s],</span>
+<span class="sd">            mass_e (mass_h): effective mass of electrons (holes). All parameters</span>
+<span class="sd">            can be scalars or callable functions similar to the location</span>
+<span class="sd">            argument.</span>
+<span class="sd">        location: Boolean function</span>
+<span class="sd">            Definition of the region containing the material. This function must</span>
+<span class="sd">            take a tuple of real world coordinates (e.g. (x, y)) as parameter,</span>
+<span class="sd">            and return True (False) if the lattice node is inside (outside) the</span>
+<span class="sd">            region.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># sites belonging to the region</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">get_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+
+        <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">vt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">mobility</span>
+
+        <span class="c1"># default material parameters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_length</span> <span class="o">==</span> <span class="s1">&#39;m&#39;</span><span class="p">:</span>
+            <span class="n">mt</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e25</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e25</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mass_e&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>\
+              <span class="s1">&#39;mass_h&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span>\
+              <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cn&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mt</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e19</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mass_e&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> \
+                  <span class="s1">&#39;mass_h&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> \
+                  <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cn&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nc</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Eg</span><span class="p">,</span>\
+                  <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="s1">&#39;mass_e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass_e</span><span class="p">,</span>\
+                  <span class="s1">&#39;mass_h&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass_h</span><span class="p">,</span> <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_e</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu_h</span><span class="p">,</span>\
+                  <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Etrap</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau_e</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau_h</span><span class="p">,</span>\
+                  <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">bl</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="s1">&#39;Cn&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cn</span><span class="p">,</span> <span class="s1">&#39;Cp&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cp</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">mt</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mat</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                <span class="n">arrays</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">arrays</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">*</span> <span class="n">location</span><span class="p">(</span><span class="n">pos</span><span class="p">))[</span><span class="n">s</span><span class="p">]</span>
+
+        <span class="c1"># make values dimensionless</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nc</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="n">N</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="n">N</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Eg</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="n">vt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_e</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>   <span class="o">/=</span> <span class="n">mu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_h</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>   <span class="o">/=</span> <span class="n">mu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Etrap</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>  <span class="o">/=</span> <span class="n">vt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_e</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>  <span class="o">/=</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau_h</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>  <span class="o">/=</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bl</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="n">vt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>      <span class="o">/=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">N</span><span class="p">)</span><span class="o">/</span><span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cn</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">N</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cp</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>     <span class="o">/=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">N</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">t</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n1</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nc</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span><span class="p">[</span><span class="n">s</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Eg</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Etrap</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p1</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nc</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span><span class="p">[</span><span class="n">s</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Eg</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">Etrap</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ni</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nc</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nv</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Eg</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">add_defects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">transition</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">E</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">E</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">s</span><span class="p">,</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_point_defects_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">location</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">,</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_line_defects_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">location</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">plane_defects_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Wrong definition for the defects location: &quot;</span>\
+            <span class="s2">&quot;the list must contain one number for a point, two points for a line, four points for a plane.&quot;</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># The scale of the density of states is also the inverse of the scale </span>
+        <span class="c1"># for the capture cross section</span>
+        <span class="n">NN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span> <span class="c1"># m^-2</span>
+        <span class="k">if</span> <span class="n">sigma_h</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sigma_h</span> <span class="o">=</span> <span class="n">sigma_e</span>
+        <span class="n">sigma_e</span> <span class="o">*=</span> <span class="n">NN</span>
+        <span class="n">sigma_h</span> <span class="o">*=</span> <span class="n">NN</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">N</span> <span class="o">/</span> <span class="n">NN</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">E</span><span class="p">:</span> <span class="n">N</span><span class="p">(</span><span class="n">E</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">NN</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="n">defect</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="p">,</span> <span class="n">transition</span><span class="p">,</span> <span class="n">dl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defects_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Builder.add_point_defects"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_point_defects">[docs]</a>    <span class="k">def</span> <span class="nf">add_point_defects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add additional charges (for a grain boundary for instance) to the total</span>
+<span class="sd">        charge of the system. These charges are distributed on a line.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        location: float</span>
+<span class="sd">            The coordinate in [cm] defines a point defect in 1D.</span>
+<span class="sd">        N: float or function</span>
+<span class="sd">            Defect density of states [cm\ :sup:`-2` ]. Provide a float when the</span>
+<span class="sd">            defect density of states is a delta function, or a function</span>
+<span class="sd">            returning a float for a continuum. This function should take a</span>
+<span class="sd">            single energy argument in [eV].</span>
+<span class="sd">        sigma_e: float</span>
+<span class="sd">            Electron capture cross section [cm\ :sup:`2`].</span>
+<span class="sd">        sigma_h: float</span>
+<span class="sd">            Hole capture cross section [cm\ :sup:`2`].</span>
+<span class="sd">        E: float</span>
+<span class="sd">            Energy level of a single state defined with respect to the intrinsic</span>
+<span class="sd">            Fermi level [eV]. Set to `None` for a continuum of states.</span>
+<span class="sd">        transition: tuple</span>
+<span class="sd">            Charge transition occurring at the energy level E.  The tuple (p, q)</span>
+<span class="sd">            represents a defect with transition p/q (level empty to level</span>
+<span class="sd">            occupied).</span>
+
+<span class="sd">        Warnings</span>
+<span class="sd">        --------</span>
+<span class="sd">        * Point defects are defined for one-dimensional systems only.</span>
+
+<span class="sd">        * We assume that no additional charge is on the contacts.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        add_line_defects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_defects</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">transition</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Builder.add_line_defects"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_line_defects">[docs]</a>    <span class="k">def</span> <span class="nf">add_line_defects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add additional charges (for a grain boundary for instance) to the total</span>
+<span class="sd">        charge of the system. These charges are distributed on a line.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        location: list of two array_like coordinates [(x1, y1), (x2, y2)] </span>
+<span class="sd">            The coordinates in [m] define a line of defects in 2D.</span>
+<span class="sd">        N: float or function</span>
+<span class="sd">            Defect density of states [m\ :sup:`-2` ]. Provide a float when the</span>
+<span class="sd">            defect density of states is a delta function, or a function</span>
+<span class="sd">            returning a float for a continuum. This function should take a</span>
+<span class="sd">            single energy argument in [eV].</span>
+<span class="sd">        sigma_e: float</span>
+<span class="sd">            Electron capture cross section [m\ :sup:`2`].</span>
+<span class="sd">        sigma_h: float</span>
+<span class="sd">            Hole capture cross section [m\ :sup:`2`].</span>
+<span class="sd">        E: float </span>
+<span class="sd">            Energy level of a single state defined with respect to the intrinsic</span>
+<span class="sd">            Fermi level [eV]. Set to `None` for a continuum of states.</span>
+<span class="sd">        transition: tuple</span>
+<span class="sd">            Charge transition occurring at the energy level E.  The tuple (p, q)</span>
+<span class="sd">            represents a defect with transition p/q (level empty to level</span>
+<span class="sd">            occupied).</span>
+
+<span class="sd">        Warnings</span>
+<span class="sd">        --------</span>
+<span class="sd">        * Line defects are defined for two-dimensional systems only.</span>
+
+<span class="sd">        * We assume that no additional charge is on the contacts.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        add_plane_defects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+           
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_defects</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">transition</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Builder.add_plane_defects"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_plane_defects">[docs]</a>    <span class="k">def</span> <span class="nf">add_plane_defects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add additional charges (for a grain boundary for instance) to the total</span>
+<span class="sd">        charge of the system. These charges are distributed on a plane.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        location: list of four array_like coordinates [(x1, y1, z1), (x2, y2, z2), (x3, y3, z3), (x4, y4, z4)] </span>
+<span class="sd">            The coordinates in [m] define a plane of defects in 3D. The first</span>
+<span class="sd">            two coordinates define a line that must be parallel to the line</span>
+<span class="sd">            defined by the last two points.</span>
+<span class="sd">        N: float or function</span>
+<span class="sd">            Defect density of states [cm\ :sup:`-2` ]. Provide a float when the</span>
+<span class="sd">            defect density of states is a delta function, or a function</span>
+<span class="sd">            returning a float for a continuum. This function should take a</span>
+<span class="sd">            single energy argument in [eV].</span>
+<span class="sd">        sigma_e: float</span>
+<span class="sd">            Electron capture cross section [cm\ :sup:`2`].</span>
+<span class="sd">        sigma_h: float</span>
+<span class="sd">            Hole capture cross section [cm\ :sup:`2`].</span>
+<span class="sd">        E: float </span>
+<span class="sd">            Energy level of a single state defined with respect to the intrinsic</span>
+<span class="sd">            Fermi level [eV]. Set to `None` for a continuum of states.</span>
+<span class="sd">        transition: tuple</span>
+<span class="sd">            Charge transition occurring at the energy level E.  The tuple (p, q)</span>
+<span class="sd">            represents a defect with transition p/q (level empty to level</span>
+<span class="sd">            occupied).</span>
+
+<span class="sd">        Warnings</span>
+<span class="sd">        --------</span>
+<span class="sd">        * The planes must be rectangles with at least one edge parallel to</span>
+<span class="sd">          either the x or y or z-axis.</span>
+
+<span class="sd">        * The two lines that define a plane must be parallel to either x or y or</span>
+<span class="sd">          z-axis</span>
+
+<span class="sd">        * Plane defects are defined for three-dimensional systems only.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        add_line_defects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_defects</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">sigma_e</span><span class="p">,</span> <span class="n">sigma_h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">transition</span><span class="p">)</span></div>
+ 
+    <span class="k">def</span> <span class="nf">doping_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_sites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">+</span> <span class="n">density</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span>
+
+<div class="viewcode-block" id="Builder.add_donor"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_donor">[docs]</a>    <span class="k">def</span> <span class="nf">add_donor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add donor dopants to the system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        density: float</span>
+<span class="sd">            Doping density [cm\ :sup:`-3`].</span>
+<span class="sd">        location: Boolean function</span>
+<span class="sd">            Definition of the region containing the doping. This function must</span>
+<span class="sd">            take a tuple of real world coordinates (e.g. (x, y)) as parameters,</span>
+<span class="sd">            and return True (False) if the lattice node is inside (outside) the</span>
+<span class="sd">            region.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doping_profile</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Builder.add_acceptor"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.add_acceptor">[docs]</a>    <span class="k">def</span> <span class="nf">add_acceptor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add acceptor dopants to the system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        density: float</span>
+<span class="sd">            Doping density [cm\ :sup:`-3`].</span>
+<span class="sd">        location: Boolean function</span>
+<span class="sd">            Definition of the region containing the doping. This function must</span>
+<span class="sd">            take a tuple of real world coordinates (e.g. (x, y)) as parameters,</span>
+<span class="sd">            and return True (False) if the lattice node is inside (outside) the</span>
+<span class="sd">            region.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doping_profile</span><span class="p">(</span><span class="o">-</span><span class="n">density</span><span class="p">,</span> <span class="n">location</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Builder.generation"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.generation">[docs]</a>    <span class="k">def</span> <span class="nf">generation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Distribution of generated carriers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f: function </span>
+<span class="sd">            Generation rate [cm\ :sup:`-3`].</span>
+<span class="sd">        args: tuple</span>
+<span class="sd">            Additional arguments to be passed to the function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">zpts</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">generation</span>
+        
+        <span class="c1"># compute the integral of the generation</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpts</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ny</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypts</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nz</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span> 
+            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zpts</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">length</span>
+
+        <span class="n">w</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nz</span><span class="p">):</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ny</span><span class="p">):</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nx</span> <span class="o">+</span> <span class="n">k</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nx</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">ny</span>  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nx</span><span class="p">)]</span>
+                <span class="n">sp</span> <span class="o">=</span> <span class="n">spline</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
+                <span class="n">u</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">integral</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">sp</span> <span class="o">=</span> <span class="n">spline</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">integral</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gtot</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gtot</span> <span class="o">=</span> <span class="n">w</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="n">spline</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gtot</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">integral</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+ 
+
+<div class="viewcode-block" id="Builder.contact_S"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.contact_S">[docs]</a>    <span class="k">def</span> <span class="nf">contact_S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Scn_left</span><span class="p">,</span> <span class="n">Scp_left</span><span class="p">,</span> <span class="n">Scn_right</span><span class="p">,</span> <span class="n">Scp_right</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the lists of recombination velocities that define the charge</span>
+<span class="sd">        collection at the contacts out of equilibrium.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Scn_left: float</span>
+<span class="sd">            Surface recombination velocity for electrons at the left contact [cm/s].</span>
+<span class="sd">        Scp_left: float</span>
+<span class="sd">            Surface recombination velocity for holes at the left contact [cm/s].</span>
+<span class="sd">        Scn_right: float</span>
+<span class="sd">            Surface recombination velocity for electrons at the right contact [cm/s].</span>
+<span class="sd">        Scn_right: float</span>
+<span class="sd">            Surface recombination velocity for electrons at the right contact [cm/s].</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Scn</span> <span class="o">=</span> <span class="p">[</span><span class="n">Scn_left</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">velocity</span><span class="p">,</span> 
+                    <span class="n">Scn_right</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">velocity</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Scp</span> <span class="o">=</span> <span class="p">[</span><span class="n">Scp_left</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">velocity</span><span class="p">,</span> 
+                    <span class="n">Scp_right</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">velocity</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Builder.contact_type"><a class="viewcode-back" href="../../reference/sesame.builder.html#sesame.builder.Builder.contact_type">[docs]</a>    <span class="k">def</span> <span class="nf">contact_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left_contact</span><span class="p">,</span> <span class="n">right_contact</span><span class="p">,</span> <span class="n">left_wf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">right_wf</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define the boundary conditions for the contacts at thermal equilibrium.</span>
+<span class="sd">        &#39;Ohmic&#39; or &#39;Schottky&#39; impose a value of the electrostatic potential,</span>
+<span class="sd">        &#39;Neutral&#39; imposes a zero potential derivative.  </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        left_contact: string</span>
+<span class="sd">            Boundary conditions for the contact at x=0.</span>
+<span class="sd">        right_contact: string</span>
+<span class="sd">            Boundary conditions for the contact at x=L.</span>
+<span class="sd">        left_wf: float</span>
+<span class="sd">            Work function for a Schottky contact at x=0.</span>
+<span class="sd">        right_wf: float</span>
+<span class="sd">            Work function for a Schottky contact at x=L.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Schottky contacts require work functions. If no values are given, an</span>
+<span class="sd">        error will be raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Schottky requires work functions</span>
+        <span class="k">if</span> <span class="n">left_contact</span> <span class="o">==</span> <span class="s1">&#39;Schottky&#39;</span> <span class="ow">and</span> <span class="n">left_wf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shcottky contacts require work functions.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">right_contact</span> <span class="o">==</span> <span class="s1">&#39;Schottky&#39;</span> <span class="ow">and</span> <span class="n">right_wf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shcottky contacts require work functions.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">contacts_bcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">left_contact</span><span class="p">,</span> <span class="n">right_contact</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contacts_WF</span> <span class="o">=</span> <span class="p">[</span><span class="n">left_wf</span><span class="p">,</span> <span class="n">right_wf</span><span class="p">]</span></div></div>
+
+<span class="k">def</span> <span class="nf">get_sites</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="c1"># find the sites which belong to a region</span>
+    <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nz</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+ 
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="n">ny</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">,</span> <span class="n">nx</span><span class="p">)])</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">),</span>
+                                         <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">,</span> <span class="n">nx</span><span class="o">*</span><span class="n">nz</span><span class="p">),</span>
+                                         <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">zpts</span><span class="p">,</span> <span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="p">)</span>
+                                        <span class="p">)</span>
+                                       <span class="p">),</span>
+                         <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">nx</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nz</span><span class="p">)</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">pos</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">location</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sites</span><span class="p">,</span> <span class="n">pos</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sites</span><span class="p">[</span><span class="n">mask</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)],</span> <span class="n">pos</span>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

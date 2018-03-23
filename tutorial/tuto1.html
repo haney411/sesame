@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.1. Tutorial 1: I-V curve of a one-dimensional pn homojunction &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.2. Tutorial 2: I-V curve of a one-dimensional pn heterojunction" href="tuto1dHetero.html" />
+    <link rel="prev" title="3. Tutorial: learning Sesame through examples" href="index.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-1-i-v-curve-of-a-one-dimensional-pn-homojunction">
+<h1>3.1. Tutorial 1: I-V curve of a one-dimensional <em>pn</em> homojunction<a class="headerlink" href="#tutorial-1-i-v-curve-of-a-one-dimensional-pn-homojunction" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we show how to build a simple one-dimensional <img class="math" src="../_images/math/cd39222b9729fdd884d13570f97f8b24a4178284.png" alt="pn^{+}"/> homojunction and compute its I-V curve.  In this and other tutorials we assume a rudimentary knowledge of python (e.g. basic syntax, function definition, etc.) and numpy (e.g. array declarations).</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">1d_homojunction.py</span></code> located in the
+<code class="docutils literal"><span class="pre">examples\tutorial1</span></code> directory of the distribution.  The same simulation&#8217;s GUI input file is <code class="docutils literal"><span class="pre">1d_homojunction.ini</span></code>, also located in the <code class="docutils literal"><span class="pre">examples\tutorial1</span></code> directory.</p>
+</div>
+<p>The 1-dimensional <img class="math" src="../_images/math/cd39222b9729fdd884d13570f97f8b24a4178284.png" alt="pn^{+}"/> homojunction band diagram under short-circuit conditions is shown below.</p>
+<div align="center" class="align-center"><img alt="../_images/homo_bands.svg" src="../_images/homo_bands.svg" /></div>
+<div class="section" id="a-word-for-matlab-users">
+<h2>3.1.1. A word for Matlab users<a class="headerlink" href="#a-word-for-matlab-users" title="Permalink to this headline">¶</a></h2>
+<p>Sesame uses the Python3 language and the scientific libraries Numpy and Scipy.
+A documentation on the similarities and differences between Matlab and
+Numpy/Scipy can be found <a class="reference external" href="https://docs.scipy.org/doc/numpy-dev/user/numpy-for-matlab-users.html">here</a>.</p>
+</div>
+<div class="section" id="constructing-a-mesh-and-building-the-system">
+<h2>3.1.2. Constructing a mesh and building the system<a class="headerlink" href="#constructing-a-mesh-and-building-the-system" title="Permalink to this headline">¶</a></h2>
+<p>We start by importing the sesame and numpy packages:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sesame</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+<p>Choosing a good mesh is a crucial step in performing the simulation.  An overly coarse mesh will
+give inaccurate results, while an excessively fine mesh will make the simulation slow.  The best mesh for most systems is nonuniform: being highly refined in regions where the solution changes rapidly, and coarse in regions where the solution varies slowly.  After the tutorials the user should have a
+sense of how to construct an appropriate mesh.  In this example, we create a mesh which
+contains more sites in the <em>pn</em> junction depletion region:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">L</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span> <span class="c1"># length of the system in the x-direction [cm]</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.2e-4</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>     <span class="c1"># depletion region</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.2e-4</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mi">50</span><span class="p">)))</span>                    <span class="c1"># neutral region</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Sesame assumes all quantities of length are input in units of cm.  Other assumed input units are: time in s, energy in eV.</p>
+</div>
+<p>To make a system we use Sesame&#8217;s <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> class.   The input to <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> are grids along the different dimensions of the simulation.  For a 1-dimensional simulation, we provide only the <em class="xref py py-obj">x</em> grid as input.  <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> returns an object <code class="xref py py-obj docutils literal"><span class="pre">sys</span></code> which contains all the information needed to describe the simulation.  Additional simulation settings will be set by calling various methods of <code class="xref py py-obj docutils literal"><span class="pre">sys</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-material-properties">
+<h2>3.1.3. Adding material properties<a class="headerlink" href="#adding-material-properties" title="Permalink to this headline">¶</a></h2>
+<p>Next we add a material to our system. A material is defined using a python <code class="docutils literal"><span class="pre">dictionary</span></code> object, which is added to the system using the <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_material" title="sesame.builder.Builder.add_material"><code class="xref py py-func docutils literal"><span class="pre">add_material()</span></code></a> method of <code class="xref py py-obj docutils literal"><span class="pre">sys</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">material</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span><span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span><span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span><span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span><span class="mf">3.9</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span><span class="mf">9.4</span><span class="p">,</span>
+        <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span><span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span><span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">material</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here <code class="docutils literal"><span class="pre">Nc</span></code> (<code class="docutils literal"><span class="pre">Nv</span></code>) is the effective density of states of the conduction
+(valence) band (<img class="math" src="../_images/math/cd819d3bc86c636be855f2877b2069c3e6831dff.png" alt="\mathrm{cm^{-3}}"/>), <code class="docutils literal"><span class="pre">Eg</span></code> is the material band gap
+(<img class="math" src="../_images/math/7e39bd8717cc82ed0615eac839ac69b1370203d3.png" alt="\mathrm{eV}"/>), <code class="docutils literal"><span class="pre">epsilon</span></code> is the material&#8217;s dielectric constant,
+<code class="docutils literal"><span class="pre">mu_e</span></code> (<code class="docutils literal"><span class="pre">mu_h</span></code>) is the electron (hole) mobility (<img class="math" src="../_images/math/e13e3612926549002342d4a72ba1ae3d0eec4d9d.png" alt="\mathrm{cm^2/(V\cdot
+s)}"/>), <code class="docutils literal"><span class="pre">Et</span></code> is the energy level of the bulk recombination defect, as measured from the intrinsic energy level, and <code class="docutils literal"><span class="pre">tau_e</span></code> (<code class="docutils literal"><span class="pre">tau_h</span></code>) is the electron (hole) bulk lifetime (<img class="math" src="../_images/math/72fa49b99eb05f2ff8e6c6415b325561dfb1d25f.png" alt="\mathrm{s}"/>).  For the full list of material parameters available, see the documentation of the method
+<a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_material" title="sesame.builder.Builder.add_material"><code class="xref py py-func docutils literal"><span class="pre">add_material()</span></code></a>.</p>
+</div>
+<div class="section" id="adding-dopants">
+<h2>3.1.4. Adding dopants<a class="headerlink" href="#adding-dopants" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s add dopants to make a <em>pn</em> junction. This requires specifying the
+regions containing each type of dopant, which is done by using a python function.  Here&#8217;s an example: let&#8217;s suppose the n-type region is between x=0 and x=50 nm.  We write a function which returns a value of <code class="docutils literal"><span class="pre">True</span></code> when the input <code class="docutils literal"><span class="pre">pos</span></code> belongs to this region, and <code class="docutils literal"><span class="pre">False</span></code> otherwise:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">junction</span> <span class="o">=</span> <span class="mi">50</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span> <span class="c1"># extent of the junction from the left contact [cm]</span>
+
+<span class="k">def</span> <span class="nf">n_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">junction</span>
+</pre></div>
+</div>
+<p>We add donors by calling the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_donor" title="sesame.builder.Builder.add_donor"><code class="xref py py-func docutils literal"><span class="pre">add_donor()</span></code></a>, whose input arguments are the donor concentration (in units <img class="math" src="../_images/math/cd819d3bc86c636be855f2877b2069c3e6831dff.png" alt="\mathrm{cm^{-3}}"/>), and the function defining the doped region (<code class="docutils literal"><span class="pre">n_region</span></code> for this example)</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Add the donors</span>
+<span class="n">nD</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span> <span class="c1"># [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_donor</span><span class="p">(</span><span class="n">nD</span><span class="p">,</span> <span class="n">n_region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Similarly, we add acceptors by defining a function <code class="docutils literal"><span class="pre">p_region</span></code> to specify the p-type region, and add it to the system with the <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_acceptor" title="sesame.builder.Builder.add_acceptor"><code class="xref py py-func docutils literal"><span class="pre">add_acceptor()</span></code></a> method:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">p_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">junction</span>
+
+<span class="c1"># Add the acceptors</span>
+<span class="n">nA</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e15</span> <span class="c1"># [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_acceptor</span><span class="p">(</span><span class="n">nA</span><span class="p">,</span> <span class="n">p_region</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal"><span class="pre">lambda</span></code> keyword provides a more efficient way to define simple functions with python.  For example, the <code class="docutils literal"><span class="pre">p_region</span></code> function can be defined in the single line:  <code class="docutils literal"><span class="pre">p_region</span> <span class="pre">=</span> <span class="pre">lambda</span> <span class="pre">x:</span> <span class="pre">x&lt;=junction</span></code>. See python documentation for more details on defining &#8220;anonymous functions&#8221; using  <code class="docutils literal"><span class="pre">lambda</span></code>.</p>
+</div>
+</div>
+<div class="section" id="specifying-contact-types">
+<h2>3.1.5. Specifying contact types<a class="headerlink" href="#specifying-contact-types" title="Permalink to this headline">¶</a></h2>
+<p>Next we need to specify the
+contact boundary conditions.  For this example, we&#8217;ll use selective Ohmic contacts.  We first specify contact type with the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.contact_type" title="sesame.builder.Builder.contact_type"><code class="xref py py-func docutils literal"><span class="pre">contact_type()</span></code></a>, which takes two input arguments: the contact type at <img class="math" src="../_images/math/a098f6561c6f5328410f2b9133b9db7b9f08e663.png" alt="x=0"/> (&#8220;left&#8221; contact), and the contact type at <img class="math" src="../_images/math/9063bec8499024b443542a4b0a51c9c932564532.png" alt="x=L"/> (&#8220;right&#8221; contact).  Note that the order of arguments matters: the right contact type is the first agument, the left contact type is the second argument.  Then we&#8217;ll specify the recombination velocities for electrons and holes at left and right contacts with the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.contact_S" title="sesame.builder.Builder.contact_S"><code class="xref py py-func docutils literal"><span class="pre">contact_S()</span></code></a>.  Again, the order of the input to <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.contact_S" title="sesame.builder.Builder.contact_S"><code class="xref py py-func docutils literal"><span class="pre">contact_S()</span></code></a> should be as shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Define Ohmic contacts</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_type</span><span class="p">(</span><span class="s1">&#39;Ohmic&#39;</span><span class="p">,</span> <span class="s1">&#39;Ohmic&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define the surface recombination velocities for electrons and holes [cm/s]</span>
+<span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span>  <span class="c1"># cm/s</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_S</span><span class="p">(</span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="computing-an-i-v-curve">
+<h2>3.1.6. Computing an I-V curve<a class="headerlink" href="#computing-an-i-v-curve" title="Permalink to this headline">¶</a></h2>
+<p>We&#8217;ve finished defining the system.  Before computing the system response to illumination and applied voltage, it&#8217;s necessary to first solve the equilibrium system.  This is done with the command <code class="xref py py-func docutils literal"><span class="pre">solve_equilibrium()</span></code>, which returns the equilibrium solution</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># First find the equilibrium solution</span>
+<span class="n">eqsolution</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">solve_equilibrium</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To compute an I-V curve under illumination, we specify the generation profile with a function.  For this example, we use an exponentially varying generation profile defined in the function <code class="docutils literal"><span class="pre">gfcn</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phi</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span>       <span class="c1"># photon flux [1/(cm^2 s)]</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="mf">2.3e4</span>    <span class="c1"># absorption coefficient [1/cm]</span>
+
+<span class="c1"># Define a function for the generation rate</span>
+<span class="k">def</span> <span class="nf">gfcn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">phi</span> <span class="o">*</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Adding the illumination profile to the simulation is accomplished with the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.generation" title="sesame.builder.Builder.generation"><code class="xref py py-func docutils literal"><span class="pre">generation()</span></code></a>, which takes the function we&#8217;ve defined as input:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">.</span><span class="n">generation</span><span class="p">(</span><span class="n">gfcn</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally we compute the I-V curve under illumination.  We do this with the sesame method <code class="xref py py-func docutils literal"><span class="pre">IVcurve()</span></code>, whose the input arguments are the system object <code class="docutils literal"><span class="pre">sys</span></code>, an array of applied voltage values, the equilibrium solution we just computed, and a string which is the seedname for the output files.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">voltages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">IVcurve</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="n">eqsolution</span><span class="p">,</span> <span class="s1">&#39;1dhomo_V&#39;</span><span class="p">)</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">current</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal"><span class="pre">IVcurve</span></code> method returns the dimensionless current. We convert it to dimension-ful form by multiplying by the constant <code class="docutils literal"><span class="pre">sys.scaling.current</span></code>.</p>
+</div>
+<p>The output data files will have names like <code class="docutils literal"><span class="pre">1dhomo_V_0.gzip</span></code> where the number 0
+labels the the <code class="docutils literal"><span class="pre">voltages</span></code> array index. These data files contain all the information about the simulation settings and solution.  <a class="reference internal" href="analysis.html"><span class="doc">tutorial 4</span></a> discusses how to access and plot this detailed data.</p>
+</div>
+<div class="section" id="saving-and-plotting-the-i-v-curve">
+<h2>3.1.7. Saving and plotting the I-V curve<a class="headerlink" href="#saving-and-plotting-the-i-v-curve" title="Permalink to this headline">¶</a></h2>
+<p>In this section we show different ways to save the computed current and voltage values.</p>
+<p>First we store the data we wish to save in a dictionary object:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v&#39;</span><span class="p">:</span><span class="n">voltages</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">:</span><span class="n">j</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Then we use the numpy function <code class="docutils literal"><span class="pre">save</span></code> to save the data as a numpy array.  The first argument is the filename for the saved data (note the file will receive a .npy extension), the second argument is the dictionary to save:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;jv_values&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The data dictionary can subsequently be loaded with the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;jv_values.npy&quot;</span><span class="p">)</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>We can also save the data in a simple ascii file with the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s1">&#39;jv_values.txt&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>An alternative is to save the data in a Matlab-readable .mat file.  This is accomplished with the function <code class="docutils literal"><span class="pre">savemat</span></code> in the scipy library:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">scipy.io.savemat</span> <span class="k">as</span> <span class="nn">savemat</span>
+<span class="n">savemat</span><span class="p">(</span><span class="s1">&#39;jv_values.mat&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In the tutorial script, we&#8217;ve added commands to check if the scipy library is installed.  We omit these commands in this tutorial for the sake of clarity.</p>
+</div>
+<p>The library <a class="reference external" href="http://matplotlib.sourceforge.net/">Matplotlib</a> is commonly used for plotting in python.  The code for generating a simple current-voltage plot is shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">voltages</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Voltage [V]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Current [A/cm^2]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>      <span class="c1"># add grid</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>      <span class="c1"># show the plot on the screen</span>
+</pre></div>
+</div>
+<div align="center" class="align-center"><img alt="../_images/jv_homo.svg" src="../_images/jv_homo.svg" /></div>
+<p>We discuss loading and plotting results in <a class="reference internal" href="analysis.html"><span class="doc">Tutorial 4</span></a>.  As a preview, we show the code used to generate the band diagram we showed at the beginning of this tutorial:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">result</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="s1">&#39;1dhomo_V_0.gzip&#39;</span><span class="p">)</span>  <span class="c1"># load data file</span>
+<span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span><span class="n">result</span><span class="p">)</span>                   <span class="c1"># get Sesame analyzer object</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">az</span><span class="o">.</span><span class="n">band_diagram</span><span class="p">((</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">))</span>                           <span class="c1"># plot band diagram along line from p1 to p2</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.1. Tutorial 1: I-V curve of a one-dimensional <em>pn</em> homojunction</a><ul>
+<li><a class="reference internal" href="#a-word-for-matlab-users">3.1.1. A word for Matlab users</a></li>
+<li><a class="reference internal" href="#constructing-a-mesh-and-building-the-system">3.1.2. Constructing a mesh and building the system</a></li>
+<li><a class="reference internal" href="#adding-material-properties">3.1.3. Adding material properties</a></li>
+<li><a class="reference internal" href="#adding-dopants">3.1.4. Adding dopants</a></li>
+<li><a class="reference internal" href="#specifying-contact-types">3.1.5. Specifying contact types</a></li>
+<li><a class="reference internal" href="#computing-an-i-v-curve">3.1.6. Computing an I-V curve</a></li>
+<li><a class="reference internal" href="#saving-and-plotting-the-i-v-curve">3.1.7. Saving and plotting the I-V curve</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">3. Tutorial: learning Sesame through examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tuto1dHetero.html"
+                        title="next chapter">3.2. Tutorial 2: I-V curve of a one-dimensional <em>pn</em> heterojunction</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/tuto1.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tuto1dHetero.html" title="3.2. Tutorial 2: I-V curve of a one-dimensional pn heterojunction"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="3. Tutorial: learning Sesame through examples"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

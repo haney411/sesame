@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.6. sesame.observables – Low-level routines for computing densities and currents &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5.6.1. sesame.observables.get_n" href="generated/sesame.observables.get_n.html" />
+    <link rel="prev" title="5.5. sesame.analyzer – Computing densities, recombination and currents" href="sesame.analyzer.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">5. Core modules</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sesame-observables-low-level-routines-for-computing-densities-and-currents">
+<h1>5.6. <a class="reference internal" href="#module-sesame.observables" title="sesame.observables"><code class="xref py py-mod docutils literal"><span class="pre">sesame.observables</span></code></a> &#8211; Low-level routines for computing densities and currents<a class="headerlink" href="#sesame-observables-low-level-routines-for-computing-densities-and-currents" title="Permalink to this headline">¶</a></h1>
+<p>These routines are to be used when the <a class="reference internal" href="sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> class
+does not provide the desired methods.</p>
+<span class="target" id="module-sesame.observables"></span><table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/sesame.observables.get_n.html#sesame.observables.get_n" title="sesame.observables.get_n"><code class="xref py py-obj docutils literal"><span class="pre">get_n</span></code></a>(sys,&nbsp;efn,&nbsp;v,&nbsp;sites)</td>
+<td>Compute the electron density on the given sites.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/sesame.observables.get_p.html#sesame.observables.get_p" title="sesame.observables.get_p"><code class="xref py py-obj docutils literal"><span class="pre">get_p</span></code></a>(sys,&nbsp;efp,&nbsp;v,&nbsp;sites)</td>
+<td>Compute the hole density on the given sites.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/sesame.observables.get_jn.html#sesame.observables.get_jn" title="sesame.observables.get_jn"><code class="xref py py-obj docutils literal"><span class="pre">get_jn</span></code></a>(sys,&nbsp;efn,&nbsp;v,&nbsp;sites_i,&nbsp;sites_ip1,&nbsp;dl)</td>
+<td>Compute the electron current between sites <code class="docutils literal"><span class="pre">site_i</span></code> and <code class="docutils literal"><span class="pre">sites_ip1</span></code>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/sesame.observables.get_jp.html#sesame.observables.get_jp" title="sesame.observables.get_jp"><code class="xref py py-obj docutils literal"><span class="pre">get_jp</span></code></a>(sys,&nbsp;efp,&nbsp;v,&nbsp;sites_i,&nbsp;sites_ip1,&nbsp;dl)</td>
+<td>Compute the hole current between sites <code class="docutils literal"><span class="pre">site_i</span></code> and <code class="docutils literal"><span class="pre">sites_ip1</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sesame.analyzer.html"
+                        title="previous chapter">5.5. <code class="docutils literal"><span class="pre">sesame.analyzer</span></code> &#8211; Computing densities, recombination and currents</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/sesame.observables.get_n.html"
+                        title="next chapter">5.6.1. sesame.observables.get_n</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/sesame.observables.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/sesame.observables.get_n.html" title="5.6.1. sesame.observables.get_n"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sesame.analyzer.html" title="5.5. sesame.analyzer – Computing densities, recombination and currents"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

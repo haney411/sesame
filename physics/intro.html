@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2.1. Physical model &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="2.2. Numerical treatment of the drift diffusion Poisson equations" href="discretization.html" />
+    <link rel="prev" title="2. Analytical model and numerical implementation" href="index.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">2. Analytical model and numerical implementation</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="physical-model">
+<h1>2.1. Physical model<a class="headerlink" href="#physical-model" title="Permalink to this headline">¶</a></h1>
+<p>Here we present the geometry with the system of coordinates that Sesame assumes,
+and the set of equations that it solves.</p>
+<div class="section" id="geometry-and-governing-equations">
+<h2>2.1.1. Geometry and governing equations<a class="headerlink" href="#geometry-and-governing-equations" title="Permalink to this headline">¶</a></h2>
+<p>Our model system is shown below. It is a semiconductor device connected to two
+contacts at <img class="math" src="../_images/math/a098f6561c6f5328410f2b9133b9db7b9f08e663.png" alt="x=0"/> and <img class="math" src="../_images/math/9063bec8499024b443542a4b0a51c9c932564532.png" alt="x=L"/>. The doped regions are drawn for the
+example only, any doping profile can be considered.</p>
+<div align="center" class="align-center"><img alt="../_images/model.svg" src="../_images/model.svg" /></div>
+<p>The steady state of this system under nonequilibrium conditions is described by
+the drift-diffusion-Poisson equations:</p>
+<div class="math" id="equation-ddp">
+<p><span class="eqno">(1)<a class="headerlink" href="#equation-ddp" title="Permalink to this equation">¶</a></span><img src="../_images/math/872c9ba3f38484537333f5b4ac98c4c6cfcba3b3.png" alt="\vec{\nabla}\cdot \vec{J}_n &amp;= -q(G-R)\\
+\vec{\nabla}\cdot \vec{J}_p &amp;= q(G-R)\\
+\vec{\nabla}\cdot (\epsilon\vec{\nabla} \phi) &amp;= -\rho/\epsilon_0"/></p>
+</div><p>with the currents</p>
+<div class="math" id="equation-currents">
+<p><span class="eqno">(2)<a class="headerlink" href="#equation-currents" title="Permalink to this equation">¶</a></span><img src="../_images/math/4f655d90ff784312cbdc9405c3f286ca745f42da.png" alt="\vec{J}_n &amp;= -q\mu_n n \vec{\nabla} \phi + qD_n \vec{\nabla}n \\
+\vec{J}_p &amp;= -q\mu_p p \vec{\nabla} \phi - qD_p \vec{\nabla}p"/></p>
+</div><p>where <img class="math" src="../_images/math/8c7bc51bcbbbea716ddc3d85912e40ed9f19cb13.png" alt="n, p"/> are the electron and hole number densities, and <img class="math" src="../_images/math/c2f31c22645274c375eff7920cfdfdc18d60341f.png" alt="\phi"/>
+is the electrostatic potential. <img class="math" src="../_images/math/bd14a5c1f0becaf7d1cf0f82205503bcfe86ee1d.png" alt="J_{n(p)}"/> is the charge current density
+of electrons (holes). Here <img class="math" src="../_images/math/620a3ce6403ec82f1347af9985bc03f7a9382f4a.png" alt="q"/> is the absolute value of the electron
+charge. <img class="math" src="../_images/math/9a51ab9a0b521705e1e8762fac6bdd6f11771758.png" alt="\rho"/> is the local charge, <img class="math" src="../_images/math/65d19c66c148d5016c6a89d26486bf6d1966ded1.png" alt="\epsilon"/> is the dielectric
+constant of the material, and <img class="math" src="../_images/math/f6da37ff3a3873900e235d0837af9e1d2a30c2ab.png" alt="\epsilon_0"/> is the permittivity of free space. <img class="math" src="../_images/math/ed96d74b9dc74acefb54828a05d3ed9f3a642f16.png" alt="\mu_{n,p}"/> is the electron/hole
+mobility, and is related the diffusion <img class="math" src="../_images/math/0832994f032987e6122ea85fe4fe8ad5429a348b.png" alt="D _{n,p}"/> by <img class="math" src="../_images/math/7546c0c8e346637c452fa9df5f827e8fda8e43d6.png" alt="D_{n,p} =
+k_BT\mu_{n,p}/q"/>, where <img class="math" src="../_images/math/9b7b651ab6210b690c07d6a9ec9c1c39ec2953fd.png" alt="k_B"/> is Boltzmann&#8217;s constant and <img class="math" src="../_images/math/f2d283a2071f9d043c9e0b0f794a8880fa0d3ce9.png" alt="T"/> is the temperature.  <img class="math" src="../_images/math/dee63237674afc3154c2e33b7b68d67f85f2ee0a.png" alt="G"/> is the generation rate density, <img class="math" src="../_images/math/a00254b18ffa992f0ef19f6e6e095b83c8f85e94.png" alt="R"/> is the
+recombination and we denote the net generation rate <img class="math" src="../_images/math/9be739dae8ee2304e68ddc99fab2f5bda3355db6.png" alt="U=G-R"/>. The natural
+length scale is the Debye length, given by <img class="math" src="../_images/math/2ea34bfa1175cff187e3cb112ec59e8b720feb84.png" alt="\lambda = \epsilon_0 k_B T /(q^2
+N )"/>, where <img class="math" src="../_images/math/f4170ed8938b79490d8923857962695514a8e4cb.png" alt="N"/> is the concentration relevant to the problem. Combining
+Eqs. <a class="reference internal" href="#equation-ddp">(1)</a> and Eqs. <a class="reference internal" href="#equation-currents">(2)</a>, and scaling by the Debye length leads to
+the following system</p>
+<div class="math">
+<p><img src="../_images/math/7cc8d4a119a8581f85b404bc7e0d81de081ac889.png" alt="\widetilde{\vec{\nabla}} \cdot \left(-\bar n \widetilde{\vec{\nabla}} \bar \phi + \widetilde{\vec{\nabla}}\bar n \right) &amp;= \bar U
+
+\widetilde{\vec{\nabla}} \cdot \left(-\bar p \widetilde{\vec{\nabla}}\bar \phi - \widetilde{\vec{\nabla}}\bar p \right) &amp;= -\bar U
+
+\widetilde{\vec{\nabla}} \cdot (\epsilon \vec{\nabla} \bar \phi) &amp;= \bar n - \bar p"/></p>
+</div><p>where <img class="math" src="../_images/math/0f175c79ef68223ee49127b334d4970f20b4c992.png" alt="\widetilde{\vec{\nabla}}"/> is the dimensionless spatial first
+derivative operator, and the dimensionless variables are</p>
+<div class="math">
+<p><img src="../_images/math/2638c0a2c1c6c0a4dbc6dccef459c27150784873.png" alt="\bar \phi &amp;= \frac{q\phi}{k_BT}\\
+\bar n &amp;= n/N \\
+\bar p &amp;= p/N \\
+\bar U &amp;= \frac{U \lambda^2}{ND} \\
+\bar t &amp;= t \frac{q\mu N}{\epsilon_0} \\
+\bar J_{n,p} &amp;= J_{n,p} \frac{\lambda}{qDN}"/></p>
+</div><p>with <img class="math" src="../_images/math/0bd0c3e5c4fb39c9a2f8fc8ba9b62d5284793841.png" alt="D=k_BT\mu/q"/> a diffusion coefficient corresponding to our choice of
+scaling for the mobility <img class="math" src="../_images/math/589dcd9c5a4d208f1f666e44ac2ffc9fda4ac18a.png" alt="\mu=1~\mathrm{cm^2/(V\cdot s)}"/>. See the
+<a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Scaling" title="sesame.builder.Scaling"><code class="xref py py-func docutils literal"><span class="pre">Scaling()</span></code></a> class for the implementation of these scalings.</p>
+<p>We suppose that the bulk recombination is through three mechanisms:
+Shockley-Read-Hall, radiative and Auger.  The Shockley-Read-Hall recombination takes the form</p>
+<div class="math">
+<p><img src="../_images/math/bd4b84f7bf032e49c8bdb17b1c175441ee651089.png" alt="R_{\rm SRH} = \frac{np - n_i^2}{\tau_p(n+n_1) + \tau_n(p+p_1)}"/></p>
+</div><p>where <img class="math" src="../_images/math/d3975ddb7068a40e18febeb6dfd2b0274a4292a6.png" alt="n^2_i = N_C N_V e^{-E_g/k_BT}, n_1 = n_i e^{E_T /k_BT} ,
+p_1 = n_i e^{- E_T /k_BT}"/>, where <img class="math" src="../_images/math/fdff5fa27accf214c369e74b87a4314248f13928.png" alt="E_T"/> is the
+energy level of the trap state measured from the intrinsic energy level, <img class="math" src="../_images/math/3ec80e4ba694401a8e74a678206262ef77c992cb.png" alt="N_C"/> (<img class="math" src="../_images/math/f74a1d04153f372f115fdcf13fbb6bd4032f5d5c.png" alt="N_V"/>) is the conduction (valence) band effective density of
+states. The equilibrium Fermi energy at which
+<img class="math" src="../_images/math/53b15a1dee3455459ee2cb30d05aa86dcc04657f.png" alt="n=p=n_i"/> is the intrinsic energy level <img class="math" src="../_images/math/121af75672b8dcc5914c5278af6d04598f07982c.png" alt="E_i"/>.
+<img class="math" src="../_images/math/1d3d57c806c7484564462e3cffd0d532c34986d0.png" alt="\tau_{n,(p)}"/> is the bulk lifetime for
+electrons (holes). It is given by</p>
+<div class="math" id="equation-tau">
+<p><span class="eqno">(3)<a class="headerlink" href="#equation-tau" title="Permalink to this equation">¶</a></span><img src="../_images/math/66f51b5c9b1805f4315911d0a081565effd5e46a.png" alt="\tau_{n,p} = \frac{1}{N_T v^{\rm th}_{n,p} \sigma_{n,p}}"/></p>
+</div><p>where <img class="math" src="../_images/math/54d4ece21716fde1a50f3493b471b1975e8a3df5.png" alt="N_T"/> is the three-dimensional trap density, <img class="math" src="../_images/math/49cc8c6f46408c5b5caec30c7ab34f36bd57408e.png" alt="v^{\rm
+th}_{n,p}"/> is the thermal velocity of carriers: <img class="math" src="../_images/math/9ca9dbff5fc187397edcb16349c32868854ea858.png" alt="v^{\rm th}_{n,p} = 3k_BT
+/m_{n,p}"/>, and <img class="math" src="../_images/math/1aedcea0c52208cb500f8a58f041c70a2c89ce91.png" alt="\sigma_{n,p}"/> is the capture cross-section for (electrons,
+holes).</p>
+<p>The radiative recombination has the form</p>
+<div class="math">
+<p><img src="../_images/math/912b18b8606307cda8fac6db97c129e3a56fa646.png" alt="R_{\rm rad} = B (np - n_i^2)"/></p>
+</div><p>where <img class="math" src="../_images/math/9805f44feec6f81d376d09e88b8236635edbb3c8.png" alt="B"/> is the radiative recombination coefficient of the material. The
+Auger mechanism has the form</p>
+<div class="math">
+<p><img src="../_images/math/7bb998cf02c2c34c80cac8455cfdb27d22355217.png" alt="R_{\rm A} = (C_n n + C_p p) (np - n_i^2)"/></p>
+</div><p>where <img class="math" src="../_images/math/078a384ca76cbc44e0d8d15fff7abfee3b64144d.png" alt="C_n"/> (<img class="math" src="../_images/math/e65155afe38b657c28670cd04e8ae2f12d399b81.png" alt="C_p"/>) is the electron (hole) Auger coefficient.</p>
+</div>
+<div class="section" id="extended-line-and-plane-defects">
+<h2>2.1.2. Extended line and plane defects<a class="headerlink" href="#extended-line-and-plane-defects" title="Permalink to this headline">¶</a></h2>
+<p>Additional charged defects can be added to the system to simulate, for example,
+grain boundaries or sample surfaces in a semiconductor. These extended planar
+defects occupy a reduced dimensionality space: a point in a 1D model, a line in
+a 2D model, a plane in a 3D model). The extended defect energy level spectrum
+can be discrete or continuous. For a discrete spectrum, we label a defect with
+the subscript <img class="math" src="../_images/math/b9d10b54744d07746b97f53c55eb98046fd76c8c.png" alt="d"/>. The occupancy of the defect level <img class="math" src="../_images/math/eb6a51db8f160598afc39432401712a89b798acb.png" alt="f_d"/> is given
+by <a class="footnote-reference" href="#id2" id="id1">[1]</a></p>
+<div class="math">
+<p><img src="../_images/math/6689e57e4288494b7383e0fbc51dd4a6242fbe3b.png" alt="f_d = \frac{S_n n + S_p p_d}{S_n(n+n_d) + S_p(p+p_d)}"/></p>
+</div><p>where <img class="math" src="../_images/math/e11f2701c4a39c7fe543a6c4150b421d50f1c159.png" alt="n"/> (<img class="math" src="../_images/math/27d463da4622be5b3ef1d4176ced7d7a323c6425.png" alt="p"/>) is the electron (hole) density at the
+defect location, <img class="math" src="../_images/math/24a5f08f05f27f8f57c57ac39781ab1c5721eb61.png" alt="S_n"/>, <img class="math" src="../_images/math/9d145e08431d03bc14fc004ffd81d6a4f634e1c4.png" alt="S_p"/> are recombination velocity parameters
+for electrons and holes respectively. <img class="math" src="../_images/math/7f022743140b3c69e2a3bb796a82bb989ff558af.png" alt="n_d"/> and <img class="math" src="../_images/math/ae8feae219cfe85afbe30eed9aa3d9bdb4a0c2de.png" alt="p_d"/> are</p>
+<div class="math">
+<p><img src="../_images/math/7ad22f4023c6c806f0a372f07c032fe428e4d9b9.png" alt="\bar n_d &amp;= n_i e^{E_d/k_BT}\\
+\bar p_d &amp;= n_i e^{-E_d/k_BT}"/></p>
+</div><p>where <img class="math" src="../_images/math/8265e228cc75baa44e125289c998471ab91b78e6.png" alt="E_d"/> is calculated from the intrinsic Fermi level <img class="math" src="../_images/math/121af75672b8dcc5914c5278af6d04598f07982c.png" alt="E_i"/>.
+The defect recombination is of Shockley-Read-Hall form:</p>
+<div class="math">
+<p><img src="../_images/math/6425e4899e20a19a03c62e79224fb816e5565f6d.png" alt="R_d = \frac{S_nS_p(n p - n_i^2)}{S_n(n + n_d) + S_p(p + p_d)}."/></p>
+</div><p>The charge density <img class="math" src="../_images/math/3a5db2b38f6977857ac38bbab1f427fef9007189.png" alt="q_d"/> given by a single defect depends on the defect type (acceptor
+or donor)</p>
+<div class="math">
+<p><img src="../_images/math/28bf1b2529edad6a8027665a6cd873026b53716b.png" alt="q_d = q\rho_d \times \left\{
+ \begin{array}{ll}
+     (1-f_d) &amp; \mbox{donor} \\
+     (-f_d) &amp; \mbox{acceptor}
+ \end{array}
+ \right."/></p>
+</div><p>where <img class="math" src="../_images/math/92b7a1ef6c9be76cfc9c26f41afcad9c0a9e9531.png" alt="\rho_d"/> is the defect density of state at energy <img class="math" src="../_images/math/8265e228cc75baa44e125289c998471ab91b78e6.png" alt="E_d"/>.
+<img class="math" src="../_images/math/9f069e60c76cb3702b969a5e89b61b6089e6171c.png" alt="S_n, S_p"/> and <img class="math" src="../_images/math/92b7a1ef6c9be76cfc9c26f41afcad9c0a9e9531.png" alt="\rho_d"/> are related to the electron and hole capture
+cross sections <img class="math" src="../_images/math/bb7a749f15cd16714d8346e00b05b26062b14e6b.png" alt="\sigma_n, \sigma_p"/> of the defect level by <img class="math" src="../_images/math/1c2c3a67d36936b285e50060abe0b607a52ec9a9.png" alt="S_{n,p}
+= \sigma_{n,p}v^{\rm th}_{n,p}\rho_d"/>, where <img class="math" src="../_images/math/fcb1f7e749e35467d2b6d5589931b66f5435f06d.png" alt="v^{\rm th}_{n,p}"/> is the
+electron (hole) thermal velocity.
+Multiple defects are described by summing over defect label <img class="math" src="../_images/math/b9d10b54744d07746b97f53c55eb98046fd76c8c.png" alt="d"/>, or
+performing an integral over a continuous defect spectrum.</p>
+</div>
+<div class="section" id="carrier-densities-and-quasi-fermi-levels">
+<h2>2.1.3. Carrier densities and quasi-Fermi levels<a class="headerlink" href="#carrier-densities-and-quasi-fermi-levels" title="Permalink to this headline">¶</a></h2>
+<p>Despite their apparent simplicity, Eqs. <a class="reference internal" href="#equation-ddp">(1)</a> are numerically challenging to
+solve. We next discuss a slightly different form of
+these same equations which is convenient to use for numerical solutions. We
+introduce the concept of quasi-Fermi level for electrons and holes (denoted by
+<img class="math" src="../_images/math/3784a65e156cfd9643db7ff9380d1a5835fe0d03.png" alt="E_{F_n}"/> and <img class="math" src="../_images/math/39b01dcfda604c5650bc4e636a073c40d9d48b2c.png" alt="E_{F_p}"/>  respectively). The carrier density is
+related to these quantities as</p>
+<div class="math" id="equation-np">
+<p><span class="eqno">(4)<a class="headerlink" href="#equation-np" title="Permalink to this equation">¶</a></span><img src="../_images/math/4f128dd02b2503a360af115d49a5cd96e58ccadb.png" alt="n(x,y,z) &amp;= N_C e^{\left(E_{F_n}(x,y,z) + q\phi(x,y,z) - \chi(x,y,z)\right)/k_BT}\\
+p(x,y,z) &amp;= N_V e^{\left(-E_{F_p}(x,y,z) - q\phi(x,y,z) - E_g+\chi(x,y,z)\right)/k_BT}"/></p>
+</div><p>where the term <img class="math" src="../_images/math/1bc8153a40ba7d2281c26bfe99604ad9e6f34749.png" alt="\chi"/> is the electron affinity, <img class="math" src="../_images/math/c2f31c22645274c375eff7920cfdfdc18d60341f.png" alt="\phi"/> is the
+electrostatic potential, and <img class="math" src="../_images/math/8923ebd84644b288235f02f20e9a315013190f5c.png" alt="E_g"/> is the bandgap. Note that all of these quantities may vary with position. Quasi-Fermi levels are convenient in part because they
+guarantee that carrier densities are always positive. While carrier densities
+vary by many orders of magnitude, quasi-Fermi levels require much less variation
+to describe the system.</p>
+<p>The electron and hole current can be shown to be proportional to the spatial
+gradient of the quasi-Fermi level</p>
+<div class="math">
+<p><img src="../_images/math/dff258e56c7e306409a9f5e8a98ac87b981b1bd3.png" alt="\vec{J}_n &amp;= q\mu_n n \vec{\nabla} E_{F_n}\\
+\vec{J}_p &amp;= q\mu_p p \vec{\nabla} E_{F_p}"/></p>
+</div><p>These relations for the currents will be used in the discretization of Eq.
+<a class="reference internal" href="#equation-ddp">(1)</a>.</p>
+</div>
+<div class="section" id="boundary-conditions-at-the-contacts">
+<h2>2.1.4. Boundary conditions at the contacts<a class="headerlink" href="#boundary-conditions-at-the-contacts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="equilibrium-boundary-conditions">
+<h3>Equilibrium boundary conditions<a class="headerlink" href="#equilibrium-boundary-conditions" title="Permalink to this headline">¶</a></h3>
+<p>For a given system, Sesame first solves the equilibrium problem. In equilibrium,
+the quasi-Fermi level of electrons and holes are equal and spatially
+constant.  We choose an energy reference such that in equilibrium,
+<img class="math" src="../_images/math/b93f4f339c47f5aacd34ee0a194c51ffedecb41d.png" alt="E_F=E_{F_p} = E_{F_n} = 0"/>. The equilibrium problem is therefore
+reduced to a single variable <img class="math" src="../_images/math/c2f31c22645274c375eff7920cfdfdc18d60341f.png" alt="\phi"/>. Sesame employs both
+Dirichlet and Neumann equilibrium boundary conditions
+for <img class="math" src="../_images/math/c2f31c22645274c375eff7920cfdfdc18d60341f.png" alt="\phi"/>, which we discuss next.</p>
+<div class="section" id="dirichlet-boundary-conditions">
+<h4>Dirichlet boundary conditions<a class="headerlink" href="#dirichlet-boundary-conditions" title="Permalink to this headline">¶</a></h4>
+<p>Sesame uses Dirichlet boundary conditions as the
+default. This is the appropriate choice when the equilibrium charge
+density at the contacts is known <em>a priori</em>, and applies for Ohmic and ideal
+Schottky contacts. For Ohmic boundary conditions, the carrier density is assumed
+to be equal and opposite to the ionized dopant density at the contact. For an
+n-type contact with <img class="math" src="../_images/math/0fc750f1c2b3c40da15072422e9dc14ea01238bc.png" alt="N_D"/> ionized donors at the <img class="math" src="../_images/math/e8ac4909349801204e15b315f2fb193df0e4b1f6.png" alt="x = 0"/> contact, Eq.
+<a class="reference internal" href="#equation-np">(4)</a> yields the expression for <img class="math" src="../_images/math/6008aa59d0547164c51b7a7c31ae52f239b341ab.png" alt="\phi^{eq}(x = 0)"/>:</p>
+<div class="math">
+<p><img src="../_images/math/2a2d483b44585e476773cd00e8fe28af33449021.png" alt="\phi^{eq} (0,y,z) = k_BT \ln\left(N_D/N_C \right) -  \chi(0,y,z)"/></p>
+</div><p>Similar reasoning yields expressions for <img class="math" src="../_images/math/54d2f5976f91250823451621bf451c6e962091c7.png" alt="\phi^{eq}"/> for p-type doping and
+at the <img class="math" src="../_images/math/77a7f56d9148d72cb31d39da09a7849169a0e20f.png" alt="x = L"/> contact.  For Schottky contacts, we assume that the Fermi
+level at the contact is equal to the Fermi level of the metal.  This implies
+that the equilibrium electron density is <img class="math" src="../_images/math/c84f15c9e5cb20e76f2024e3cc4c9d27d27e3082.png" alt="N_C \exp [-(\Phi_M-\chi)/k_BT]"/>
+where <img class="math" src="../_images/math/5c1be4c232d95d7b86dfc8d6aec434501b2cd152.png" alt="\Phi_M"/> is the work function of the metal contact. Eq. <a class="reference internal" href="#equation-np">(4)</a>
+then yields the expression for <img class="math" src="../_images/math/54d2f5976f91250823451621bf451c6e962091c7.png" alt="\phi^{eq}"/> (shown here for
+the <img class="math" src="../_images/math/e8ac4909349801204e15b315f2fb193df0e4b1f6.png" alt="x = 0"/> contact):</p>
+<div class="math">
+<p><img src="../_images/math/ced0e3ba77c56aa6b109f6d01d5ef3c05fbb3883.png" alt="\phi^{eq} (0,y,z) = -\Phi_M|_{x=0~contact}"/></p>
+</div><p>An identical expression applies for the <img class="math" src="../_images/math/77a7f56d9148d72cb31d39da09a7849169a0e20f.png" alt="x = L"/> contact.</p>
+</div>
+<div class="section" id="neumann-boundary-conditions">
+<h4>Neumann boundary conditions<a class="headerlink" href="#neumann-boundary-conditions" title="Permalink to this headline">¶</a></h4>
+<p>Sesame also has an option for Neumann boundary conditions, where it is assumed
+that the electrostatic field at the contact vanishes:</p>
+<div class="math" id="equation-bc1">
+<p><span class="eqno">(5)<a class="headerlink" href="#equation-bc1" title="Permalink to this equation">¶</a></span><img src="../_images/math/721847465926d2a16c70912a93c937757517e480.png" alt="\frac{\partial \phi^{eq}}{\partial x}(0, y, z) = \frac{\partial \phi^{eq}}{\partial x}(L, y, z) = 0"/></p>
+</div><p>The equilibrium potential <img class="math" src="../_images/math/54d2f5976f91250823451621bf451c6e962091c7.png" alt="\phi^{eq}"/> determines the equilibrium
+densities <img class="math" src="../_images/math/b472c1c074543db5eba83ca66e292dc16c562a67.png" alt="n_{eq}, p_{eq}"/> according to Eqs. <a class="reference internal" href="#equation-np">(4)</a> with <img class="math" src="../_images/math/d5e28ad6d886b799ab499eaa1640589006b2d9b8.png" alt="E_{F_n}
+= E_{F_p} = 0"/>.</p>
+</div>
+</div>
+<div class="section" id="out-of-equilibrium-boundary-conditions">
+<h3>Out of equilibrium boundary conditions<a class="headerlink" href="#out-of-equilibrium-boundary-conditions" title="Permalink to this headline">¶</a></h3>
+<p>Out of thermal equilibrium, we impose Dirichlet boundary conditions on the
+electrostatic potential. For example, in the presence of an applied bias
+<img class="math" src="../_images/math/fae0e7a73748991e5540d874416000583f64f58e.png" alt="V"/> at <img class="math" src="../_images/math/9063bec8499024b443542a4b0a51c9c932564532.png" alt="x=L"/>, the boundary conditions are</p>
+<div class="math">
+<p><img src="../_images/math/a2d32159766a2b7b1ea3716a4b7682670a143551.png" alt="\phi(0, y, z) &amp;= \phi^{eq}(0,y,z)\\
+\phi(L, y, z) &amp;= \phi^{eq}(L,y,z) + qV"/></p>
+</div><p>For the drift-diffusion equations, the boundary conditions for carriers at
+charge-collecting contacts are typically parameterized with the
+surface recombination velocities for electrons and holes at the contacts,
+denoted respectively by <img class="math" src="../_images/math/2154c9cb083247ec7fbd7ed653f83c2b522822ab.png" alt="S_{c_p}"/> and <img class="math" src="../_images/math/6dcdea0df99d824f2116cff94421b159e7fff8c2.png" alt="S_{c_n}"/></p>
+<div class="math" id="equation-BCs">
+<p><span class="eqno">(6)<a class="headerlink" href="#equation-BCs" title="Permalink to this equation">¶</a></span><img src="../_images/math/614619454e04a27a766d07260bbfc3632b0bf29d.png" alt="\vec{J}_n(0,y,z) \cdot \vec{u}_x &amp;= qS_{c_n} (n(0,y,z) - n_{\rm eq}(0,y,z))\\
+\vec{J}_p(0,y,z) \cdot \vec{u}_x &amp;= -qS_{c_p} (p(0,y,z) - p_{\rm eq}(0,y,z))\\
+\vec{J}_n(L,y,z) \cdot \vec{u}_x &amp;= -qS_{c_n} (n(L,y,z) - n_{\rm eq}(L,y,z))\\
+\vec{J}_p(L,y,z) \cdot \vec{u}_x &amp;= qS_{c_p} (p(L,y,z) - p_{\rm eq}(L,y,z))\\"/></p>
+</div><p>where <img class="math" src="../_images/math/460c8d5a12d57ce85112ca3f3cd25b8de75a0477.png" alt="n(p)_{\rm eq}"/> is the thermal equilibrium electron (hole) density.</p>
+<p class="rubric">References</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><ol class="first last upperalpha simple" start="23">
+<li>Shockley, W. T. Read, Jr., <em>Phys. Rev.</em>, <strong>87</strong>, 835 (1952).</li>
+</ol>
+</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">2.1. Physical model</a><ul>
+<li><a class="reference internal" href="#geometry-and-governing-equations">2.1.1. Geometry and governing equations</a></li>
+<li><a class="reference internal" href="#extended-line-and-plane-defects">2.1.2. Extended line and plane defects</a></li>
+<li><a class="reference internal" href="#carrier-densities-and-quasi-fermi-levels">2.1.3. Carrier densities and quasi-Fermi levels</a></li>
+<li><a class="reference internal" href="#boundary-conditions-at-the-contacts">2.1.4. Boundary conditions at the contacts</a><ul>
+<li><a class="reference internal" href="#equilibrium-boundary-conditions">Equilibrium boundary conditions</a><ul>
+<li><a class="reference internal" href="#dirichlet-boundary-conditions">Dirichlet boundary conditions</a></li>
+<li><a class="reference internal" href="#neumann-boundary-conditions">Neumann boundary conditions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#out-of-equilibrium-boundary-conditions">Out of equilibrium boundary conditions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">2. Analytical model and numerical implementation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="discretization.html"
+                        title="next chapter">2.2. Numerical treatment of the drift diffusion Poisson equations</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/physics/intro.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="discretization.html" title="2.2. Numerical treatment of the drift diffusion Poisson equations"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="2. Analytical model and numerical implementation"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.5. sesame.analyzer – Computing densities, recombination and currents &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5.6. sesame.observables – Low-level routines for computing densities and currents" href="sesame.observables.html" />
+    <link rel="prev" title="sesame.solvers.Solver – Sesame solver oject" href="sesame.solvers.solver.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">5. Core modules</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sesame-analyzer-computing-densities-recombination-and-currents">
+<h1>5.5. <a class="reference internal" href="#module-sesame.analyzer" title="sesame.analyzer"><code class="xref py py-mod docutils literal"><span class="pre">sesame.analyzer</span></code></a> &#8211; Computing densities, recombination and currents<a class="headerlink" href="#sesame-analyzer-computing-densities-recombination-and-currents" title="Permalink to this headline">¶</a></h1>
+<p>Sesame provides several functions to compute densities, recombination and other
+integrated quantities to simplify the analysis of simulation data. We give a
+summary of these functions below:</p>
+<span class="target" id="module-sesame.analyzer"></span><table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.line" title="sesame.analyzer.Analyzer.line"><code class="xref py py-obj docutils literal"><span class="pre">line</span></code></a>(system,&nbsp;p1,&nbsp;p2)</td>
+<td>Compute the path and sites between two points.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.band_diagram" title="sesame.analyzer.Analyzer.band_diagram"><code class="xref py py-obj docutils literal"><span class="pre">band_diagram</span></code></a>(location[,&nbsp;fig])</td>
+<td>Compute the band diagram between two points defining a line.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.electron_density" title="sesame.analyzer.Analyzer.electron_density"><code class="xref py py-obj docutils literal"><span class="pre">electron_density</span></code></a>([location])</td>
+<td>Compute the electron density across the system or on a line defined by two points.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.hole_density" title="sesame.analyzer.Analyzer.hole_density"><code class="xref py py-obj docutils literal"><span class="pre">hole_density</span></code></a>([location])</td>
+<td>Compute the hole density across the system or  on a line defined by two points.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.bulk_srh_rr" title="sesame.analyzer.Analyzer.bulk_srh_rr"><code class="xref py py-obj docutils literal"><span class="pre">bulk_srh_rr</span></code></a>([location])</td>
+<td>Compute the bulk Shockley-Read-Hall recombination across the system or on a line defined by two points.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.auger_rr" title="sesame.analyzer.Analyzer.auger_rr"><code class="xref py py-obj docutils literal"><span class="pre">auger_rr</span></code></a>([location])</td>
+<td>Compute the Auger recombination across the system or on a line defined by two points.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.radiative_rr" title="sesame.analyzer.Analyzer.radiative_rr"><code class="xref py py-obj docutils literal"><span class="pre">radiative_rr</span></code></a>([location])</td>
+<td>Compute the radiative recombination across the system or on a line defined by two points.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.defect_rr" title="sesame.analyzer.Analyzer.defect_rr"><code class="xref py py-obj docutils literal"><span class="pre">defect_rr</span></code></a>(defect)</td>
+<td>Compute the recombination for all sites of a defect (2D and 3D).</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.total_rr" title="sesame.analyzer.Analyzer.total_rr"><code class="xref py py-obj docutils literal"><span class="pre">total_rr</span></code></a>()</td>
+<td>Compute the sum of all the recombination sources for all sites of the system.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.electron_current" title="sesame.analyzer.Analyzer.electron_current"><code class="xref py py-obj docutils literal"><span class="pre">electron_current</span></code></a>([component,&nbsp;location])</td>
+<td>Compute the electron current either by component (x or y) across the entire system, or on a line defined by two points.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.hole_current" title="sesame.analyzer.Analyzer.hole_current"><code class="xref py py-obj docutils literal"><span class="pre">hole_current</span></code></a>([component,&nbsp;location])</td>
+<td>Compute the hole current either by component (x or y) across the entire system, or on a line defined by two points.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.electron_current_map" title="sesame.analyzer.Analyzer.electron_current_map"><code class="xref py py-obj docutils literal"><span class="pre">electron_current_map</span></code></a>([cmap,&nbsp;scale])</td>
+<td>Compute a 2D map of the electron current.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.map3D" title="sesame.analyzer.Analyzer.map3D"><code class="xref py py-obj docutils literal"><span class="pre">map3D</span></code></a>(data[,&nbsp;cmap,&nbsp;scale])</td>
+<td>Plot a 3D map of data across the entire system.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.integrated_bulk_srh_recombination" title="sesame.analyzer.Analyzer.integrated_bulk_srh_recombination"><code class="xref py py-obj docutils literal"><span class="pre">integrated_bulk_srh_recombination</span></code></a>()</td>
+<td>Integrate the bulk Shockley-Read-Hall recombination over an entire system.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.integrated_auger_recombination" title="sesame.analyzer.Analyzer.integrated_auger_recombination"><code class="xref py py-obj docutils literal"><span class="pre">integrated_auger_recombination</span></code></a>()</td>
+<td>Integrate the Auger recombination over an entire system.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.integrated_radiative_recombination" title="sesame.analyzer.Analyzer.integrated_radiative_recombination"><code class="xref py py-obj docutils literal"><span class="pre">integrated_radiative_recombination</span></code></a>()</td>
+<td>Integrate the radiative recombination over an entire system.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.integrated_defect_recombination" title="sesame.analyzer.Analyzer.integrated_defect_recombination"><code class="xref py py-obj docutils literal"><span class="pre">integrated_defect_recombination</span></code></a>(defect)</td>
+<td>Integrate the recombination along a defect in 2D.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#sesame.analyzer.Analyzer.full_current" title="sesame.analyzer.Analyzer.full_current"><code class="xref py py-obj docutils literal"><span class="pre">full_current</span></code></a>()</td>
+<td>Compute the steady state current in 1D and 2D.</td>
+</tr>
+</tbody>
+</table>
+<p>All the functions are gathered in the <a class="reference internal" href="#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">sesame.analyzer.Analyzer()</span></code></a> class.</p>
+<dl class="class">
+<dt id="sesame.analyzer.Analyzer">
+<em class="property">class </em><code class="descclassname">sesame.analyzer.</code><code class="descname">Analyzer</code><span class="sig-paren">(</span><em>sys</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object that simplifies the extraction of physical data (densities, currents,
+recombination) across the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>sys: Builder</strong></p>
+<blockquote>
+<div><p>A discretized system.</p>
+</div></blockquote>
+<p><strong>data: dictionary</strong></p>
+<blockquote class="last">
+<div><p>Dictionary containing 1D arrays of electron and hole quasi-Fermi levels
+and the electrostatic potential across the system. Keys must be &#8216;efn&#8217;,
+&#8216;efp&#8217;, and/or &#8216;v&#8217;.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.auger_rr">
+<code class="descname">auger_rr</code><span class="sig-paren">(</span><em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.auger_rr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.auger_rr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the Auger recombination across the system or on a line defined
+by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">r: numpy array</p>
+<blockquote class="last">
+<div><p>An array with the values of recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.band_diagram">
+<code class="descname">band_diagram</code><span class="sig-paren">(</span><em>location</em>, <em>fig=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.band_diagram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.band_diagram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the band diagram between two points defining a line. Display a
+plot if fig is None.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute a band
+diagram.</p>
+</div></blockquote>
+<p><strong>fig: Maplotlib figure</strong></p>
+<blockquote class="last">
+<div><p>A plot is added to it if given. If not given, a new one is created and 
+displayed.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.bulk_srh_rr">
+<code class="descname">bulk_srh_rr</code><span class="sig-paren">(</span><em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.bulk_srh_rr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.bulk_srh_rr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the bulk Shockley-Read-Hall recombination across the system or
+on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>TUple of two points defining a line over which to compute the recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">r: numpy array</p>
+<blockquote class="last">
+<div><p>An array with the values of recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.defect_rr">
+<code class="descname">defect_rr</code><span class="sig-paren">(</span><em>defect</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.defect_rr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.defect_rr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the recombination for all sites of a defect (2D and 3D).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>defect: named tuple</strong></p>
+<blockquote>
+<div><p>Container with the properties of a defect. The expected field names
+of the named tuple are sites, location, dos, energy, sigma_e,
+sigma_h, transition, perp_dl.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">r: numpy array of floats</p>
+<blockquote class="last">
+<div><p>An array with the values of recombination at each sites.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.electron_current">
+<code class="descname">electron_current</code><span class="sig-paren">(</span><em>component='x'</em>, <em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.electron_current"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.electron_current" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the electron current either by component (x or y) across the
+entire system, or on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>component: string</strong></p>
+<blockquote>
+<div><p>Current direction <code class="docutils literal"><span class="pre">'x'</span></code> or <code class="docutils literal"><span class="pre">'y'</span></code>. By default returns all currents
+in the x-direction.</p>
+</div></blockquote>
+<p><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the electron
+current.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">jn: numpy array of floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.electron_current_map">
+<code class="descname">electron_current_map</code><span class="sig-paren">(</span><em>cmap='gnuplot'</em>, <em>scale=10000.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.electron_current_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.electron_current_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a 2D map of the electron current.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>cmap: Matplotlib color map</strong></p>
+<blockquote>
+<div><p>Color map used for the plot.</p>
+</div></blockquote>
+<p><strong>scale: float</strong></p>
+<blockquote class="last">
+<div><p>Scale to apply to the axes of the plot.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.electron_density">
+<code class="descname">electron_density</code><span class="sig-paren">(</span><em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.electron_density"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.electron_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the electron density across the system or on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the electron
+density.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">n: numpy array of floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#sesame.analyzer.Analyzer.hole_density" title="sesame.analyzer.Analyzer.hole_density"><code class="xref py py-obj docutils literal"><span class="pre">hole_density</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.full_current">
+<code class="descname">full_current</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.full_current"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.full_current" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the steady state current in 1D and 2D.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">J: float</p>
+<blockquote class="last">
+<div><p>The integrated full steady state current.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.hole_current">
+<code class="descname">hole_current</code><span class="sig-paren">(</span><em>component='x'</em>, <em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.hole_current"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.hole_current" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the hole current either by component (x or y) across the entire
+system, or on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>component: string</strong></p>
+<blockquote>
+<div><p>Current direction <code class="docutils literal"><span class="pre">'x'</span></code> or <code class="docutils literal"><span class="pre">'y'</span></code>. By default returns all currents
+in the x-direction.</p>
+</div></blockquote>
+<p><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the hole
+current.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">jp: numpy array of floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.hole_current_map">
+<code class="descname">hole_current_map</code><span class="sig-paren">(</span><em>cmap='gnuplot'</em>, <em>scale=10000.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.hole_current_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.hole_current_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a 2D map of the hole current of a 2D system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>cmap: Matplotlib color map</strong></p>
+<blockquote>
+<div><p>Color map used for the plot.</p>
+</div></blockquote>
+<p><strong>scale: float</strong></p>
+<blockquote class="last">
+<div><p>Scale to apply to the axes of the plot.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.hole_density">
+<code class="descname">hole_density</code><span class="sig-paren">(</span><em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.hole_density"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.hole_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the hole density across the system or  on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the hole
+density.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">p: numpy array of floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#sesame.analyzer.Analyzer.electron_density" title="sesame.analyzer.Analyzer.electron_density"><code class="xref py py-obj docutils literal"><span class="pre">electron_density</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.integrated_auger_recombination">
+<code class="descname">integrated_auger_recombination</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.integrated_auger_recombination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.integrated_auger_recombination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrate the Auger recombination over an entire system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">JR: float</p>
+<blockquote class="last">
+<div><p>The integrated Auger recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not implemented in 3D.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.integrated_bulk_srh_recombination">
+<code class="descname">integrated_bulk_srh_recombination</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.integrated_bulk_srh_recombination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.integrated_bulk_srh_recombination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrate the bulk Shockley-Read-Hall recombination over an entire
+system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">JR: float</p>
+<blockquote class="last">
+<div><p>The integrated bulk recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not implemented in 3D.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.integrated_defect_recombination">
+<code class="descname">integrated_defect_recombination</code><span class="sig-paren">(</span><em>defect</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.integrated_defect_recombination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.integrated_defect_recombination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrate the recombination along a defect in 2D.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">JD: float</p>
+<blockquote class="last">
+<div><p>The recombination integrated along the line of the defect.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not implemented in 3D.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.integrated_radiative_recombination">
+<code class="descname">integrated_radiative_recombination</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.integrated_radiative_recombination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.integrated_radiative_recombination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integrate the radiative recombination over an entire system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">JR: float</p>
+<blockquote class="last">
+<div><p>The integrated radiative recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not implemented in 3D.</p>
+</div>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="sesame.analyzer.Analyzer.line">
+<em class="property">static </em><code class="descname">line</code><span class="sig-paren">(</span><em>system</em>, <em>p1</em>, <em>p2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the path and sites between two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>system: Builder</strong></p>
+<blockquote>
+<div><p>The discretized system.</p>
+</div></blockquote>
+<p><strong>p1, p2: array-like (x, y)</strong></p>
+<blockquote>
+<div><p>Two points defining a line.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">s, sites: numpay arrays</p>
+<blockquote class="last">
+<div><p>Curvilinear abscissa and sites of the line.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method can be used with an instance of the Analyzer():</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">sites</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or without it:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">sites</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.map3D">
+<code class="descname">map3D</code><span class="sig-paren">(</span><em>data</em>, <em>cmap='gnuplot'</em>, <em>scale=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.map3D"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.map3D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a 3D map of data across the entire system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>data: numpy array</strong></p>
+<blockquote>
+<div><p>One-dimensional array of data with size equal to the size of the system.</p>
+</div></blockquote>
+<p><strong>cmap: string</strong></p>
+<blockquote>
+<div><p>Name of the colormap used by Matplolib.</p>
+</div></blockquote>
+<p><strong>scale: float</strong></p>
+<blockquote class="last">
+<div><p>Relevant scaling to apply to the axes.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.radiative_rr">
+<code class="descname">radiative_rr</code><span class="sig-paren">(</span><em>location=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.radiative_rr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.radiative_rr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the radiative recombination across the system or on a line defined by two points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: array-like ((x1,y1), (x2,y2))</strong></p>
+<blockquote>
+<div><p>Tuple of two points defining a line over which to compute the recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">r: numpy array</p>
+<blockquote class="last">
+<div><p>An array with the values of recombination.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.analyzer.Analyzer.total_rr">
+<code class="descname">total_rr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/analyzer.html#Analyzer.total_rr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.analyzer.Analyzer.total_rr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the sum of all the recombination sources for all sites of the
+system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">r: numpy array of floats</p>
+<blockquote class="last">
+<div><p>An array with the values of the total recombination at each sites.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sesame.solvers.solver.html"
+                        title="previous chapter"><code class="docutils literal"><span class="pre">sesame.solvers.Solver</span></code> &#8211; Sesame solver oject</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sesame.observables.html"
+                        title="next chapter">5.6. <code class="docutils literal"><span class="pre">sesame.observables</span></code> &#8211; Low-level routines for computing densities and currents</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/sesame.analyzer.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesame.observables.html" title="5.6. sesame.observables – Low-level routines for computing densities and currents"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sesame.solvers.solver.html" title="sesame.solvers.Solver – Sesame solver oject"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

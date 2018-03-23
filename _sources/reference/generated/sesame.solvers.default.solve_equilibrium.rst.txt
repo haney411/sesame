@@ -1,0 +1,6 @@
+sesame\.solvers\.default\.solve\_equilibrium
+============================================
+
+.. currentmodule:: sesame.solvers
+
+.. automethod:: default.solve_equilibrium

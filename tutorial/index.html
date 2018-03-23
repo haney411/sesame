@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3. Tutorial: learning Sesame through examples &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.1. Tutorial 1: I-V curve of a one-dimensional pn homojunction" href="tuto1.html" />
+    <link rel="prev" title="2.2. Numerical treatment of the drift diffusion Poisson equations" href="../physics/discretization.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-learning-sesame-through-examples">
+<h1>3. Tutorial: learning Sesame through examples<a class="headerlink" href="#tutorial-learning-sesame-through-examples" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tuto1.html">3.1. Tutorial 1: I-V curve of a one-dimensional <em>pn</em> homojunction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#a-word-for-matlab-users">3.1.1. A word for Matlab users</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#constructing-a-mesh-and-building-the-system">3.1.2. Constructing a mesh and building the system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#adding-material-properties">3.1.3. Adding material properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#adding-dopants">3.1.4. Adding dopants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#specifying-contact-types">3.1.5. Specifying contact types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#computing-an-i-v-curve">3.1.6. Computing an I-V curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1.html#saving-and-plotting-the-i-v-curve">3.1.7. Saving and plotting the I-V curve</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tuto1dHetero.html">3.2. Tutorial 2: I-V curve of a one-dimensional <em>pn</em> heterojunction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tuto1dHetero.html#constructing-a-grid-and-building-the-system">3.2.1. Constructing a grid and building the system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1dHetero.html#adding-material-properties">3.2.2. Adding material properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1dHetero.html#adding-dopants">3.2.3. Adding dopants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1dHetero.html#specifying-contact-types">3.2.4. Specifying contact types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto1dHetero.html#computing-an-i-v-curve">3.2.5. Computing an I-V curve</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="2d_system.html">3.3. Tutorial 3: Two-dimensional <em>pn</em> junction with a grain boundary</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="2d_system.html#building-a-two-dimensional-system">3.3.1. Building a two-dimensional system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2d_system.html#adding-a-grain-boundary">3.3.2. Adding a grain boundary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2d_system.html#computing-the-iv-curve">3.3.3. Computing the IV curve</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2d_system.html#plotting-system-variables">3.3.4. Plotting system variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2d_system.html#spatial-variation-of-material-parameters">3.3.5. Spatial variation of material parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">3.4. Tutorial 4: Saving, loading, and analyzing simulation data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#saving-data">3.4.1. Saving data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#loading-data">3.4.2. Loading data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#analysis-of-data-the-analyzer-object">3.4.3. Analysis of data: the Analyzer object</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#plotting-data">3.4.4. Plotting data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html#advanced-possibilities">3.4.5. Advanced possibilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tuto_ebic.html">3.5. Tutorial 5: Simulating an EBIC/CL experiment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tuto_ebic.html#building-the-system">3.5.1. Building the system</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto_ebic.html#adding-surface-recombination">3.5.2. Adding surface recombination</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto_ebic.html#electron-beam-excitation">3.5.3. Electron beam excitation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tuto_ebic.html#perfoming-the-beam-scan">3.5.4. Perfoming the beam scan</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">3.6. Tutorial 6: Batch submission for computing clusters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#running-sesame-on-a-cluster">3.6.1. Running Sesame on a cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#parallel-script-description">3.6.2. Parallel script description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#cycling-over-parameters-on-a-computing-cluster">3.6.3. Cycling over parameters on a computing cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#defining-the-system">3.6.4. Defining the system</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../physics/discretization.html"
+                        title="previous chapter">2.2. Numerical treatment of the drift diffusion Poisson equations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tuto1.html"
+                        title="next chapter">3.1. Tutorial 1: I-V curve of a one-dimensional <em>pn</em> homojunction</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tuto1.html" title="3.1. Tutorial 1: I-V curve of a one-dimensional pn homojunction"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../physics/discretization.html" title="2.2. Numerical treatment of the drift diffusion Poisson equations"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

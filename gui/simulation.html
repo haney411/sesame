@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>4.2. Simulation Tab &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4.3. Analysis Tab" href="analysis.html" />
+    <link rel="prev" title="4.1. System Tab" href="system.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">4. Using Sesame with the GUI</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="simulation-tab">
+<h1>4.2. Simulation Tab<a class="headerlink" href="#simulation-tab" title="Permalink to this headline">¶</a></h1>
+<p>The system tab is used to define the conditions of the simulation (e.g. the applied voltage and contact boundary conditions).  The system window is shown below:</p>
+<img alt="../_images/simulation.PNG" class="align-center" src="../_images/simulation.PNG" />
+<p><strong>Basic Settings</strong>
+The GUI allows looping over two types of variables: the applied voltage and a user-defined parameter in the generation rate (this variable is defined in the bottom-left field of the <code class="docutils literal"><span class="pre">System</span></code> tab).  The Loop values can be specified with <code class="docutils literal"><span class="pre">numpy</span></code> functions for array construction (as in the example shown above), or can be specified manually (e.g. [0, .1, .2]).</p>
+<p>The working directory and output file name determine the location and name of simulation output files.  The files can be saved in python format (.npz) or matlab format (.mat).  The output filenames are appended by &#8220;_x&#8221;, where x labels the loop index.</p>
+<p><strong>Boundary Conditions</strong>
+Boundary conditions are specified next.  Possible choices for contact boundary conditions Ohmic, Schottky, or Neutral, and recombination velocity for electrons/holes are specified here.  Transverse boundary conditions can be periodic or hardwall.</p>
+<p><strong>Algorithm Settings</strong>
+The algorithm settings are as follows:  There&#8217;s an option to ramp the generation rate.  This can be useful to assist in convergence.  If a system under illumination fails to converge, one can increase the generation ramp value.  Setting the value to &#8220;n&#8221; means the initial illumination is decreased by a factor of <img class="math" src="../_images/math/80df9e7af99a4b138ef1b79728d188d25ad9d45a.png" alt="10^n"/>.  The generation is increased by factors of 10 until the desired generation rate is reached.</p>
+<p>The <code class="docutils literal"><span class="pre">Algorithm</span> <span class="pre">precision</span></code> sets the error tolerance for the root-finding algorithm.  A value of 1e-6 is typically acceptable.  <code class="docutils literal"><span class="pre">Maximum</span> <span class="pre">steps</span></code> determines how many steps the Newton-Raphson algorithm attempts before aborting.  The <code class="docutils literal"><span class="pre">Mumps</span> <span class="pre">library</span></code> option can be selected if the MUMPS library is installed.  This library increases the speed up to several times, depending on system size.  There is also an option for <code class="docutils literal"><span class="pre">iterative</span> <span class="pre">solver</span></code>, which is less accurate, but faster for very large systems (such as 3-d systems).  The iterator solver precision is specified in the following field.</p>
+<p><strong>Simulation Log</strong>
+The simulation is launched with the <code class="docutils literal"><span class="pre">Run</span> <span class="pre">simulation</span></code> button on the top right.  The log window gives a real-time output of the error in the solution obtained with the Newton-Algorithm.  The solution procedure can be aborted at any time by clicking <code class="docutils literal"><span class="pre">Stop</span> <span class="pre">simulation</span></code>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="system.html"
+                        title="previous chapter">4.1. System Tab</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="analysis.html"
+                        title="next chapter">4.3. Analysis Tab</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/gui/simulation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="analysis.html" title="4.3. Analysis Tab"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="system.html" title="4.1. System Tab"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

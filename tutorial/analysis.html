@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.4. Tutorial 4: Saving, loading, and analyzing simulation data &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.5. Tutorial 5: Simulating an EBIC/CL experiment" href="tuto_ebic.html" />
+    <link rel="prev" title="3.3. Tutorial 3: Two-dimensional pn junction with a grain boundary" href="2d_system.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-4-saving-loading-and-analyzing-simulation-data">
+<h1>3.4. Tutorial 4: Saving, loading, and analyzing simulation data<a class="headerlink" href="#tutorial-4-saving-loading-and-analyzing-simulation-data" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we describe the input and output data formats of Sesame, and show how to use Sesame&#8217;s built-in tools to analyze the solution.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The examples treated here are in the files <code class="docutils literal"><span class="pre">analyze_data.py</span></code> and <code class="docutils literal"><span class="pre">plot_data.py</span></code>, located in the
+<code class="docutils literal"><span class="pre">examples\tutorial4</span></code> directory of the distribution.  This tutorial uses the output files from <code class="docutils literal"><span class="pre">examples\tutorial3</span></code> python script, so it&#8217;s necessary to copy these gzip data files to <code class="docutils literal"><span class="pre">examples\tutorial4</span></code>.</p>
+</div>
+<div class="section" id="saving-data">
+<h2>3.4.1. Saving data<a class="headerlink" href="#saving-data" title="Permalink to this headline">¶</a></h2>
+<p>In the previous tutorials, detailed solution data was saved automatically in the <code class="xref py py-func docutils literal"><span class="pre">IVcurve()</span></code> function.  It&#8217;s also possible to manually save simulations with Sesame&#8217;s <a class="reference internal" href="../reference/generated/sesame.utils.save_sim.html#sesame.utils.save_sim" title="sesame.utils.save_sim"><code class="xref py py-func docutils literal"><span class="pre">save_sim()</span></code></a> function.  This function saves both the system object containing all of the simulation settings, and the solution dictionary.  (The solution dictionary contains the keys <code class="docutils literal"><span class="pre">'v'</span></code>, <code class="docutils literal"><span class="pre">'efn'</span></code>, and <code class="docutils literal"><span class="pre">'efp'</span></code>.)  An example of <a class="reference internal" href="../reference/generated/sesame.utils.save_sim.html#sesame.utils.save_sim" title="sesame.utils.save_sim"><code class="xref py py-func docutils literal"><span class="pre">save_sim()</span></code></a> is shown below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sesame</span><span class="o">.</span><span class="n">save_sim</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="s2">&quot;my_sim&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The saved output file is named &#8220;my_sim.gzip&#8221;.  Note that the gzip extension indicates the data is compressed, and the data structures are stored using python&#8217;s <code class="docutils literal"><span class="pre">pickle</span></code> module.</p>
+<p>The data can also be saved in a Matlab-readable format (.mat file), by adding <code class="docutils literal"><span class="pre">fmt='mat'</span></code> as an additional input argument:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sesame</span><span class="o">.</span><span class="n">save_sim</span><span class="p">(</span><span class="n">system</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="s2">&quot;my_sim&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;mat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case the arrays defining the system properties (including <code class="docutils literal"><span class="pre">Eg</span></code>, <code class="docutils literal"><span class="pre">Nc</span></code>, <code class="docutils literal"><span class="pre">Nv</span></code>, etc) are saved in a <code class="docutils literal"><span class="pre">system</span></code> data structure, and the solution (<code class="docutils literal"><span class="pre">'efn'</span></code>, <code class="docutils literal"><span class="pre">'efp'</span></code>, <code class="docutils literal"><span class="pre">'v'</span></code>) is saved in a <code class="docutils literal"><span class="pre">results</span></code> data structure.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The saved data is &#8220;folded&#8221; into 1-d arrays.  For example, the solution array of a two-dimensional system with <img class="math" src="../_images/math/072f4f38e6686c7a493dd76a28268114f40c3b43.png" alt="n_x"/> x-grid points and <img class="math" src="../_images/math/b2ded85e97814e8e46b2ffcb8545580dd1e27004.png" alt="n_y"/> y-grid points is stored as a one-dimensional array of length <img class="math" src="../_images/math/6a74533e2a433eb41e1b42b32b37bfaca7fdf0ea.png" alt="n_x \times n_y"/>.</p>
+</div>
+<p>The postprocessing tools packaged with Sesame are built to work with python data files.  It&#8217;s therefore more convenient to save the data in python format if substantial postprocessing and analysis will be performed.</p>
+</div>
+<div class="section" id="loading-data">
+<h2>3.4.2. Loading data<a class="headerlink" href="#loading-data" title="Permalink to this headline">¶</a></h2>
+<p>Loading a saved simulation is accomplished with the <code class="docutils literal"><span class="pre">load_sim</span></code> command.  This returns the system object and result dictionary:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">result</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="s2">&quot;my_sim&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="analysis-of-data-the-analyzer-object">
+<h2>3.4.3. Analysis of data: the Analyzer object<a class="headerlink" href="#analysis-of-data-the-analyzer-object" title="Permalink to this headline">¶</a></h2>
+<p>Next we show how to extract and analyze the data computed by the solvers.  To facilitate data analysis, Sesame has an <a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> class which contains many methods to compute typical quantities of interest, such as total defect, radiative, or radiative recombination, total current, carrier densities, grain boundary recombination, etc.  A summary and the descriptions of the methods available via the
+<a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> object are detailed in
+Sec. <a class="reference internal" href="../reference/index.html#label-code"><span class="std std-ref">Core modules</span></a>.</p>
+<p>We&#8217;ll demonstrate the use of some of these methods, using the system created in <a class="reference internal" href="2d_system.html"><span class="doc">tutorial 3</span></a>.  We start as always by importing sesame and numpy:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sesame</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In the rest of this tutorial, it&#8217;s necessary to copy the output gzip files you obtained in tutorial3 to the <code class="docutils literal"><span class="pre">examples\tutorial4</span></code> directory</p>
+</div>
+<p>Our data analysis will begin with computing carrier densities and currents, and plotting data.  In the
+code below we load a data file and create an instance of Analyzer class.  The <a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> object is initialized with a system and a dictionary of
+results.  This dictionary must contain the key <code class="docutils literal"><span class="pre">'v'</span></code>, and can include <code class="docutils literal"><span class="pre">'efn'</span></code>, <code class="docutils literal"><span class="pre">'efp'</span></code> when computed.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">sesame_loadsim</span><span class="p">(</span><span class="s1">&#39;2dpnIV.vapp_0.npz&#39;</span><span class="p">)</span>
+<span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We start with how to obtain integrated
+quantities like the steady state current. In the code below we compute the
+current for all applied voltages of the IV curve, using the <a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> method <code class="docutils literal"><span class="pre">full_current()</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">J</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;2dpnIV.vapp_</span><span class="si">{0}</span><span class="s1">.npz&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>    <span class="c1"># construct file name</span>
+    <span class="n">sys</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>      <span class="c1"># load file</span>
+    <span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>            <span class="c1"># create Analyzer</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">full_current</span><span class="p">()</span>                   <span class="c1"># compute current</span>
+    <span class="n">J</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>                             <span class="c1"># add to array of current values</span>
+</pre></div>
+</div>
+<p>Non-integrated quantities are often plotted along lines. We define such lines by
+two points. Given two points in real coordinates, the method
+<a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer.line" title="sesame.analyzer.Analyzer.line"><code class="xref py py-func docutils literal"><span class="pre">line()</span></code></a> returns the dimensionless curvilinear
+abscissae along the line, and the grid sites:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>   <span class="c1"># [cm]</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span>  <span class="c1"># [cm]</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">sites</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Scalar quantities like densities or recombination are obtained either for the
+entire system, or on a line:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># For the entire system</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">electron_density</span><span class="p">()</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">n2d</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span>              <span class="c1"># convert to dimension-ful form</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n2d</span><span class="p">,</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>      <span class="c1"># reshape to 2-d array</span>
+
+<span class="c1"># On the previously defined line</span>
+<span class="n">n1d</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">electron_density</span><span class="p">((</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">))</span>
+<span class="n">n1d</span> <span class="o">=</span> <span class="n">n1d</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span>              <span class="c1"># convert to dimension-ful form</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Note that the Analyzer methods return values in dimensionless form.  It is therefore necessary to convert to dimension-ful form using the quantities stored in the <code class="docutils literal"><span class="pre">scaling</span></code> field of <code class="docutils literal"><span class="pre">sys</span></code>.   Available dimensions are: density, energy, mobility, time, length, and generation. These dimensions (except mobility) depend on the temperature and the unit length (meter or centimeter) given when creating an  instance of the class <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> (default is 300 K and centimeters).</p>
+</div>
+<p>Vectorial quantities (i.e. currents) are computed either on a line or for the
+entire system, by component. For instance, to compute the electron current in
+the x-direction:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># For the entire system</span>
+<span class="n">jn</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">electron_current</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+
+<span class="c1"># On the previously defined line</span>
+<span class="n">jn</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">electron_current</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We now turn to the treatment of the extended line defects introduced in our system.  The following code retrieves the solution along the grain boundary core:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Line endpoints of the grain boundary core</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>   <span class="c1">#[cm]</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.9e-4</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>  <span class="c1">#[cm]</span>
+<span class="c1"># get the coordinate indices of the grain boundary core</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">sites</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">syst</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+
+<span class="c1"># obtain solution data along the GB core</span>
+<span class="n">efn_GB</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;efn&#39;</span><span class="p">][</span><span class="n">sites</span><span class="p">]</span>
+<span class="n">efp_GB</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;efp&#39;</span><span class="p">][</span><span class="n">sites</span><span class="p">]</span>
+<span class="n">v_GB</span>   <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">][</span><span class="n">sites</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>In this code we compute the integrated defect recombination along the grain boundary core:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Get the first planar defect from the system</span>
+<span class="n">defect</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">defects_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="c1"># Compute the defect recombination rate as a function of position along the planar defect</span>
+<span class="n">R_GB</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">defect_rr</span><span class="p">(</span><span class="n">defect</span><span class="p">)</span>   <span class="c1"># R_GB is an array</span>
+
+<span class="c1"># Compute the integrated recombination along the line defect</span>
+<span class="n">Rtot_GB</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">integrated_defect_recombination</span><span class="p">(</span><span class="n">defect</span><span class="p">)</span>  <span class="c1">#Rtot_GB is a number</span>
+</pre></div>
+</div>
+<p>The attribute of Builder called <code class="docutils literal"><span class="pre">defects_list</span></code> is a list of named tuples. This
+list stores the parameters of each defect originally added to the system. The
+field names of the named tuples are <code class="docutils literal"><span class="pre">sites</span></code>, <code class="docutils literal"><span class="pre">location</span></code>, <code class="docutils literal"><span class="pre">dos</span></code>,
+<code class="docutils literal"><span class="pre">energy</span></code>, <code class="docutils literal"><span class="pre">sigma_e</span></code>, <code class="docutils literal"><span class="pre">sigma_h</span></code>, <code class="docutils literal"><span class="pre">transition</span></code>, <code class="docutils literal"><span class="pre">perp_dl</span></code>. The last
+field contains the lattice distance perpendicular to the line of defects. This quantity is used to normalize the recombination velocity and the density of states.</p>
+</div>
+<div class="section" id="plotting-data">
+<h2>3.4.4. Plotting data<a class="headerlink" href="#plotting-data" title="Permalink to this headline">¶</a></h2>
+<p>To facilitate the
+visualization of two- and three-dimensional plots, <code class="docutils literal"><span class="pre">sesame</span></code> provides a
+few functions (requiring <code class="docutils literal"><span class="pre">matplotblib</span></code>) that represent quantities in 2D or
+3D. For example, one can visualize the electrostatic potential at zero bias in
+3D with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="s1">&#39;2dGB_V_0.gzip&#39;</span><span class="p">)</span>
+<span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+<span class="n">az</span><span class="o">.</span><span class="n">map3D</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">])</span> <span class="c1"># units of kT/q</span>
+</pre></div>
+</div>
+<img alt="../_images/analysis_potential.png" class="align-center" src="../_images/analysis_potential.png" />
+<p>or plot the electron current accross the system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="s1">&#39;2dGB_10.gzip&#39;</span><span class="p">)</span>
+<span class="n">az</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Analyzer</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+<span class="n">az</span><span class="o">.</span><span class="n">electron_current_map</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/analysis_currents.png" class="align-center" src="../_images/analysis_currents.png" />
+<p>We finally show how to use native <code class="docutils literal"><span class="pre">matplotlib</span></code> functionality to plot the data obtained with the <a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> object.  In the following code we make plots of the electron density that we obtained earlier:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># points define line perpendicular to GB</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>   <span class="c1"># [cm]</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="o">-</span><span class="mi">6</span><span class="p">)</span>  <span class="c1"># [cm]</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">sites</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">syst</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
+
+<span class="c1"># make 1d figure</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n1d</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Position [cm]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Log[n]&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div align="center" class="align-center"><img alt="../_images/1d_n.svg" src="../_images/1d_n.svg" /></div>
+<p>Here we represent the 2-dimensional electron density with a contour plot:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># For the entire system</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">electron_density</span><span class="p">()</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">n2d</span> <span class="o">*</span> <span class="n">sys</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">density</span>              <span class="c1"># convert to dimnsion-ful form</span>
+<span class="n">n2d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n2d</span><span class="p">,</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">ny</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">nx</span><span class="p">))</span>      <span class="c1"># reshape to 2-d array</span>
+
+<span class="c1"># make 2d contour plot</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">xpts</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">ypts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n2d</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Position [cm]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Position [cm]&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;ln(n)&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>  <span class="c1"># show figures on screen</span>
+</pre></div>
+</div>
+<div align="center" class="align-center"><img alt="../_images/2d_n.svg" src="../_images/2d_n.svg" /></div>
+</div>
+<div class="section" id="advanced-possibilities">
+<h2>3.4.5. Advanced possibilities<a class="headerlink" href="#advanced-possibilities" title="Permalink to this headline">¶</a></h2>
+<p>In case the methods available in the <a class="reference internal" href="../reference/sesame.analyzer.html#sesame.analyzer.Analyzer" title="sesame.analyzer.Analyzer"><code class="xref py py-func docutils literal"><span class="pre">Analyzer()</span></code></a> are not
+enough (especially in 3D), the module <a class="reference internal" href="../reference/sesame.observables.html#module-sesame.observables" title="sesame.observables"><code class="xref py py-func docutils literal"><span class="pre">sesame.observables()</span></code></a> gives access to
+low-level routines that compute the carrier densities and the currents for any
+given sites on the discretized system.</p>
+<p>In the table below we show the syntax used to get some attributes of the
+<a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> that can then be useful:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="39%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Attribute</th>
+<th class="head">Syntax</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>grid nodes</td>
+<td><code class="docutils literal"><span class="pre">syst.xpts</span></code>, <code class="docutils literal"><span class="pre">syst.ypts</span></code>, <code class="docutils literal"><span class="pre">syst.zpts</span></code></td>
+</tr>
+<tr class="row-odd"><td>number of grid nodes</td>
+<td><code class="docutils literal"><span class="pre">syst.nx</span></code>, <code class="docutils literal"><span class="pre">syst.ny</span></code>, <code class="docutils literal"><span class="pre">syst.nz</span></code></td>
+</tr>
+<tr class="row-even"><td>grid distances</td>
+<td><code class="docutils literal"><span class="pre">syst.dx</span></code>, <code class="docutils literal"><span class="pre">syst.dy</span></code>, <code class="docutils literal"><span class="pre">syst.dz</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>The exhaustive list of all accessible attributes is in the
+documentation of the <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> class itself. Note that the
+grid nodes are in the units given in the system definition, while the grid
+distances are dimensionless.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.4. Tutorial 4: Saving, loading, and analyzing simulation data</a><ul>
+<li><a class="reference internal" href="#saving-data">3.4.1. Saving data</a></li>
+<li><a class="reference internal" href="#loading-data">3.4.2. Loading data</a></li>
+<li><a class="reference internal" href="#analysis-of-data-the-analyzer-object">3.4.3. Analysis of data: the Analyzer object</a></li>
+<li><a class="reference internal" href="#plotting-data">3.4.4. Plotting data</a></li>
+<li><a class="reference internal" href="#advanced-possibilities">3.4.5. Advanced possibilities</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="2d_system.html"
+                        title="previous chapter">3.3. Tutorial 3: Two-dimensional <em>pn</em> junction with a grain boundary</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tuto_ebic.html"
+                        title="next chapter">3.5. Tutorial 5: Simulating an EBIC/CL experiment</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/analysis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tuto_ebic.html" title="3.5. Tutorial 5: Simulating an EBIC/CL experiment"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="2d_system.html" title="3.3. Tutorial 3: Two-dimensional pn junction with a grain boundary"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

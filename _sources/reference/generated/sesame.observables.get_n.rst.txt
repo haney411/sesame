@@ -1,0 +1,6 @@
+sesame\.observables\.get\_n
+===========================
+
+.. currentmodule:: sesame.observables
+
+.. autofunction:: get_n

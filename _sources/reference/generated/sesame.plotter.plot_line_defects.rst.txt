@@ -1,0 +1,6 @@
+sesame\.plotter\.plot\_line\_defects
+====================================
+
+.. currentmodule:: sesame.plotter
+
+.. autofunction:: plot_line_defects

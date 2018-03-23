@@ -1,0 +1,6 @@
+sesame\.utils\.save\_sim
+========================
+
+.. currentmodule:: sesame.utils
+
+.. autofunction:: save_sim

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.4. sesame.solvers – Equilibrium and nonequilibrium solvers &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sesame.solvers.default.solve_equilibrium" href="generated/sesame.solvers.default.solve_equilibrium.html" />
+    <link rel="prev" title="5.3.3. sesame.plotter.plot_plane_defects" href="generated/sesame.plotter.plot_plane_defects.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">5. Core modules</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sesame-solvers-equilibrium-and-nonequilibrium-solvers">
+<span id="solvers-doc"></span><h1>5.4. <a class="reference internal" href="#module-sesame.solvers" title="sesame.solvers"><code class="xref py py-mod docutils literal"><span class="pre">sesame.solvers</span></code></a> &#8211; Equilibrium and nonequilibrium solvers<a class="headerlink" href="#sesame-solvers-equilibrium-and-nonequilibrium-solvers" title="Permalink to this headline">¶</a></h1>
+<p>Sesame offers several solvers to address quickly specific problems (equilibrium
+potential, IV curve) without having to manage a cumbersome machinery to get to
+the solution.</p>
+<div class="section" id="sesame-solvers-default-default-solver">
+<h2>5.4.1. <a class="reference internal" href="#module-sesame.solvers.default" title="sesame.solvers.default"><code class="xref py py-mod docutils literal"><span class="pre">sesame.solvers.default</span></code></a> &#8211; Default solver<a class="headerlink" href="#sesame-solvers-default-default-solver" title="Permalink to this headline">¶</a></h2>
+<p>The functions below belong to the default solver <a class="reference internal" href="#module-sesame.solvers.default" title="sesame.solvers.default"><code class="xref py py-obj docutils literal"><span class="pre">sesame.solvers.default</span></code></a> which
+is created upon loading sesame. We made these functions available once sesame is
+loaded making the solver completely transparent for the user (e.g. one can call
+<code class="xref py py-obj docutils literal"><span class="pre">sesame.solve_equilibrium</span></code>). The solver stores the equilibrium potential of the
+system as soon as it has been computed.</p>
+<span class="target" id="module-sesame.solvers"></span><span class="target" id="module-sesame.solvers.default"></span><table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/sesame.solvers.default.solve_equilibrium.html#sesame.solvers.default.solve_equilibrium" title="sesame.solvers.default.solve_equilibrium"><code class="xref py py-obj docutils literal"><span class="pre">solve_equilibrium</span></code></a>(system[,&nbsp;guess,&nbsp;tol,&nbsp;...])</td>
+<td>Solve the Poisson equation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/sesame.solvers.default.solve.html#sesame.solvers.default.solve" title="sesame.solvers.default.solve"><code class="xref py py-obj docutils literal"><span class="pre">solve</span></code></a>(system[,&nbsp;guess,&nbsp;tol,&nbsp;periodic_bcs,&nbsp;...])</td>
+<td>Solve the drift diffusion Poisson equation on a given discretized system out of equilibrium.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/sesame.solvers.default.IVcurve.html#sesame.solvers.default.IVcurve" title="sesame.solvers.default.IVcurve"><code class="xref py py-obj docutils literal"><span class="pre">IVcurve</span></code></a>(system,&nbsp;voltages,&nbsp;guess,&nbsp;file_name)</td>
+<td>Solve the Drift Diffusion Poisson equations for the voltages provided.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="creating-another-solver">
+<h2>5.4.2. Creating  another solver<a class="headerlink" href="#creating-another-solver" title="Permalink to this headline">¶</a></h2>
+<p>Making another solver is done by creating an instance of the
+<a class="reference internal" href="sesame.solvers.solver.html#sesame.solvers.Solver" title="sesame.solvers.Solver"><code class="xref py py-obj docutils literal"><span class="pre">sesame.solvers.Solver</span></code></a> class. This can be used to turn off the use of the MUMPS
+library even when the library is available.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sesame.solvers.solver.html"><code class="docutils literal"><span class="pre">sesame.solvers.Solver</span></code> &#8211; Sesame solver oject</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">5.4. <code class="docutils literal"><span class="pre">sesame.solvers</span></code> &#8211; Equilibrium and nonequilibrium solvers</a><ul>
+<li><a class="reference internal" href="#sesame-solvers-default-default-solver">5.4.1. <code class="docutils literal"><span class="pre">sesame.solvers.default</span></code> &#8211; Default solver</a></li>
+<li><a class="reference internal" href="#creating-another-solver">5.4.2. Creating  another solver</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="generated/sesame.plotter.plot_plane_defects.html"
+                        title="previous chapter">5.3.3. sesame.plotter.plot_plane_defects</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/sesame.solvers.default.solve_equilibrium.html"
+                        title="next chapter">sesame.solvers.default.solve_equilibrium</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/sesame.solvers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/sesame.solvers.default.solve_equilibrium.html" title="sesame.solvers.default.solve_equilibrium"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="generated/sesame.plotter.plot_plane_defects.html" title="5.3.3. sesame.plotter.plot_plane_defects"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

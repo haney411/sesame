@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.3. Tutorial 3: Two-dimensional pn junction with a grain boundary &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.4. Tutorial 4: Saving, loading, and analyzing simulation data" href="analysis.html" />
+    <link rel="prev" title="3.2. Tutorial 2: I-V curve of a one-dimensional pn heterojunction" href="tuto1dHetero.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-3-two-dimensional-pn-junction-with-a-grain-boundary">
+<h1>3.3. Tutorial 3: Two-dimensional <em>pn</em> junction with a grain boundary<a class="headerlink" href="#tutorial-3-two-dimensional-pn-junction-with-a-grain-boundary" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we show how to build a two-dimensional <img class="math" src="../_images/math/cd39222b9729fdd884d13570f97f8b24a4178284.png" alt="pn^{+}"/> junction containing a
+grain boundary.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">2d_homojunction_withGB.py</span></code> located in the
+<code class="docutils literal"><span class="pre">examples\tutorial3</span></code> directory in the root directory of the distribution.  The same simulation&#8217;s GUI input file is <code class="docutils literal"><span class="pre">2d_homojunction_withGB.ini</span></code>, also located in the <code class="docutils literal"><span class="pre">examples\tutorial3</span></code> directory.</p>
+</div>
+<div class="section" id="building-a-two-dimensional-system">
+<h2>3.3.1. Building a two-dimensional system<a class="headerlink" href="#building-a-two-dimensional-system" title="Permalink to this headline">¶</a></h2>
+<p>We want to simulate a two-dimensional <img class="math" src="../_images/math/cd39222b9729fdd884d13570f97f8b24a4178284.png" alt="pn^{+}"/> junction (homojunction) with a
+columnar grain boundary as depicted below.</p>
+<div align="center" class="align-center"><img alt="../_images/geometry.svg" src="../_images/geometry.svg" /></div>
+<p>As usual, we start by importing the sesame and numpy packages. We construct the
+mesh of the system and make an instance of the <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a>.  Notice that in this case we provide the <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder" title="sesame.builder.Builder"><code class="xref py py-func docutils literal"><span class="pre">Builder()</span></code></a> function with both x and y grids; this automatically tells the code to build a two-dimensional system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sesame</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># dimensions of the system</span>
+<span class="n">Lx</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span> <span class="c1"># [cm]</span>
+<span class="n">Ly</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span> <span class="c1"># [cm]</span>
+
+<span class="c1"># position of p-n junction [cm]</span>
+<span class="n">junction</span> <span class="o">=</span> <span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>
+
+<span class="c1"># Mesh</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">2</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>      <span class="c1"># mesh near the contact</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2e-4</span><span class="p">,</span> <span class="mf">1.4e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>    <span class="c1"># mesh in depletion region</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.4e-4</span><span class="p">,</span> <span class="mf">2.7e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>    <span class="c1"># mesh in bulk</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.7e-4</span><span class="p">,</span> <span class="mf">2.98e-4</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>   <span class="c1"># mesh near the GB end point</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.98e-4</span><span class="p">,</span> <span class="n">Lx</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>                    <span class="c1"># mesh near the contact</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.25e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.25e-4</span><span class="p">,</span> <span class="mf">1.75e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>  <span class="c1"># mesh near the GB core</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.75e-4</span><span class="p">,</span> <span class="n">Ly</span><span class="p">,</span> <span class="mi">50</span><span class="p">)))</span>
+
+<span class="c1"># Create a system</span>
+<span class="n">sys</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We define and add a material as before:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Dictionary with the material parameters</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span><span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span><span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span><span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;affinity&#39;</span><span class="p">:</span> <span class="mf">3.9</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span><span class="mf">9.4</span><span class="p">,</span>
+        <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span><span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span><span class="mi">10</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+
+<span class="c1"># Add the material to the system</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We next define functions delimiting the regions with different doping values. Because the model is 2-dimensional, the function input argument <code class="docutils literal"><span class="pre">pos</span></code> is a <code class="docutils literal"><span class="pre">tuple</span></code> of the form <code class="docutils literal"><span class="pre">(x,y)</span></code>.  In the functions below, we first &#8220;unpack&#8221; the x and y coordinate, and determine the location of the x-coordinate relative to the junction:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Add the donors</span>
+<span class="k">def</span> <span class="nf">n_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">junction</span>
+
+<span class="n">nD</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span>  <span class="c1"># [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_donor</span><span class="p">(</span><span class="n">nD</span><span class="p">,</span> <span class="n">n_region</span><span class="p">)</span>
+
+<span class="c1"># Add the acceptors</span>
+<span class="k">def</span> <span class="nf">p_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">junction</span>
+
+<span class="n">nA</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e15</span>  <span class="c1"># [cm^-3]</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_acceptor</span><span class="p">(</span><span class="n">nA</span><span class="p">,</span> <span class="n">p_region</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We specify contacts as before:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Use perfectly selective Ohmic contacts</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contact_type</span><span class="p">(</span><span class="s1">&#39;Ohmic&#39;</span><span class="p">,</span> <span class="s1">&#39;Ohmic&#39;</span><span class="p">)</span>
+<span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">contacts</span><span class="p">(</span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Sesame assumes that the contact properties (e.g. recombination velocity, metallic work function) are uniform along the y-direction.</p>
+</div>
+</div>
+<div class="section" id="adding-a-grain-boundary">
+<h2>3.3.2. Adding a grain boundary<a class="headerlink" href="#adding-a-grain-boundary" title="Permalink to this headline">¶</a></h2>
+<p>Now we add a line of defects to simulate a grain boundary using the <code class="docutils literal"><span class="pre">sys</span></code> method <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_line_defects" title="sesame.builder.Builder.add_line_defects"><code class="xref py py-func docutils literal"><span class="pre">add_line_defects()</span></code></a>.  The necessary inputs are the grain boundary defect&#8217;s electrical properties (e.g. capture cross sections, energy level, defect density, and charge states), and the endpoints defining the grain boundary location (recall a grain boundary is represented by a line in a 2-dimensional simulation).  Below we show code defining these properties for our example, and adding the grain boundary to the simulation:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># gap state characteristics</span>
+<span class="n">rho_GB</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e14</span>               <span class="c1"># defect density [1/cm^2]</span>
+<span class="n">S_GB</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">15</span>                <span class="c1"># trap capture cross section [cm^2]</span>
+<span class="n">E_GB</span> <span class="o">=</span> <span class="mf">0.4</span>                  <span class="c1"># energy of gap state (eV) from intrinsic energy level</span>
+
+
+<span class="c1"># Specify the two points that make the line containing additional charges</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>   <span class="c1"># [cm]</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.9e-4</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>  <span class="c1"># [cm]</span>
+
+<span class="c1"># Add the line of defects to the system</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_line_defects</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">],</span> <span class="n">rho_GB</span><span class="p">,</span> <span class="n">S_GB</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_GB</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="o">/-</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The type of the charge transition <img class="math" src="../_images/math/81136df7b26fb9cf318ec7a1b928f4720965f3db.png" alt="\alpha/\beta"/> is specified by assigning the <code class="docutils literal"><span class="pre">transition</span></code> input value as
+shown above. In our example we chose a mixture of donor and acceptor at energy
+E. An acceptor would be described by (-1,0) and a donor by (1,0).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last">
+<li><p class="first">Avoid adding charges on the contacts of the system, as these will not be
+taken into account. The code is not equiped to deal with such boundary
+conditions.</p>
+</li>
+<li><p class="first">In order to add another gap state at a different energy at the same
+location, one repeats the exact same process.</p>
+</li>
+<li><p class="first">Here we assumed equal electron and hole surface recombination velocities.
+The function <a class="reference internal" href="../reference/sesame.builder.html#sesame.builder.Builder.add_line_defects" title="sesame.builder.Builder.add_line_defects"><code class="xref py py-func docutils literal"><span class="pre">add_line_defects()</span></code></a> takes two
+surface recombination velocities as argument. The first is for electrons,
+the second for holes. To use different values write</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">.</span><span class="n">add_line_defects</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">],</span> <span class="n">rho_GB</span><span class="p">,</span> <span class="n">Sn_GB</span><span class="p">,</span> <span class="n">Sp_GB</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_GB</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">A continuum of states can be considered by omitting the energy argument
+above. The density of states can be a callable function or a numerical
+value, in which case the density of states is independent of the energy.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="computing-the-iv-curve">
+<h2>3.3.3. Computing the IV curve<a class="headerlink" href="#computing-the-iv-curve" title="Permalink to this headline">¶</a></h2>
+<p>The computation of the IV curve proceeds as in the previous tutorials.  We show the code below:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Solve equilibirum problem first</span>
+<span class="n">solution</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">solve_equilibrium</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+
+<span class="c1"># define a function for generation profile</span>
+<span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="mf">2.3e21</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.3e4</span><span class="o">*</span><span class="n">x</span><span class="p">)</span>
+<span class="c1"># add generation to the system</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">generation</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="c1"># Specify applied voltages</span>
+<span class="n">voltages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="c1"># Compute IV curve</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">IVcurve</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="n">solution</span><span class="p">,</span> <span class="s1">&#39;2dGB_V&#39;</span><span class="p">)</span>
+<span class="c1"># rescale to dimension-ful current</span>
+<span class="n">j</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="n">sesame</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">current</span>
+
+<span class="c1"># Save the computed IV data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;voltages&#39;</span><span class="p">:</span><span class="n">voltages</span><span class="p">,</span> <span class="s1">&#39;j&#39;</span><span class="p">:</span><span class="n">j</span><span class="p">}</span>
+<span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;2dGB_IV&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="plotting-system-variables">
+<h2>3.3.4. Plotting system variables<a class="headerlink" href="#plotting-system-variables" title="Permalink to this headline">¶</a></h2>
+<p>The 2-dimensional solutions can be plotted with tools we describe more fully in <a class="reference internal" href="analysis.html"><span class="doc">tutorial 4</span></a>.  As a preview, we list the commands for loading and plotting the electrostatic potential:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">load_sim</span><span class="p">(</span><span class="s1">&#39;2dGB_V_0.gzip&#39;</span><span class="p">)</span>
+<span class="n">sesame</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The output is shown below:</p>
+<div align="center" class="align-center"><img alt="../_images/GB_potential.svg" src="../_images/GB_potential.svg" /></div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">As discussed more fully in Tutorial 4, quantities in Sesame are dimensionless by default.  The electrostatic potential shown above is dimensionless, scaled by the thermal voltage.  The <code class="docutils literal"><span class="pre">scaling</span></code> field of <code class="docutils literal"><span class="pre">sys</span></code> provides the relevant quantites needed to rescale quantities to dimension-ful form.</p>
+</div>
+</div>
+<div class="section" id="spatial-variation-of-material-parameters">
+<h2>3.3.5. Spatial variation of material parameters<a class="headerlink" href="#spatial-variation-of-material-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">2d_homojunction_withGB_nonuniform_mobility.py</span></code> in the
+<code class="docutils literal"><span class="pre">examples\tutorial4</span></code> directory in the root directory of the distribution.</p>
+</div>
+<p>Suppose we want to have a reduced mobility around the line defects compared to the rest
+of the system.  To do so, we add another material which is defined in the region of non-uniform mobility.  It has the same properties as the original material, except that the mobility is not longer a scalar, but a function:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># function defining region of reduced mobility</span>
+<span class="n">xGB</span> <span class="o">=</span> <span class="mf">1.5e-4</span>  <span class="c1"># GB x-coordinate</span>
+<span class="n">Lmu</span> <span class="o">=</span> <span class="o">.</span><span class="mi">25</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>  <span class="c1"># distance from GB over which mobility is reduced</span>
+<span class="k">def</span> <span class="nf">reduced_mu_region</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">xGB</span><span class="o">+</span><span class="n">Lmu</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">xGB</span><span class="o">-</span><span class="n">Lmu</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">2.9e-4</span><span class="p">))</span>
+
+<span class="c1"># function defining region of reduced mobility</span>
+<span class="k">def</span> <span class="nf">my_mu</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+    <span class="n">muGB</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="c1"># mobility varies linearly between GB core and Lmu</span>
+    <span class="k">return</span> <span class="mi">10</span> <span class="o">+</span> <span class="mi">310</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="n">xGB</span><span class="p">)</span><span class="o">/</span><span class="n">Lmu</span><span class="p">)</span>
+
+<span class="n">mat2</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mf">9.4</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+       <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="n">my_mu</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">}</span>
+
+<span class="c1"># Add the material to the system</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">mat2</span><span class="p">,</span> <span class="n">reduced_mu_region</span><span class="p">)</span>
+
+<span class="n">sesame</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">mu_e</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.3. Tutorial 3: Two-dimensional <em>pn</em> junction with a grain boundary</a><ul>
+<li><a class="reference internal" href="#building-a-two-dimensional-system">3.3.1. Building a two-dimensional system</a></li>
+<li><a class="reference internal" href="#adding-a-grain-boundary">3.3.2. Adding a grain boundary</a></li>
+<li><a class="reference internal" href="#computing-the-iv-curve">3.3.3. Computing the IV curve</a></li>
+<li><a class="reference internal" href="#plotting-system-variables">3.3.4. Plotting system variables</a></li>
+<li><a class="reference internal" href="#spatial-variation-of-material-parameters">3.3.5. Spatial variation of material parameters</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tuto1dHetero.html"
+                        title="previous chapter">3.2. Tutorial 2: I-V curve of a one-dimensional <em>pn</em> heterojunction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="analysis.html"
+                        title="next chapter">3.4. Tutorial 4: Saving, loading, and analyzing simulation data</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/2d_system.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="analysis.html" title="3.4. Tutorial 4: Saving, loading, and analyzing simulation data"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tuto1dHetero.html" title="3.2. Tutorial 2: I-V curve of a one-dimensional pn heterojunction"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.3. Installation instructions (for beginners) &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="1.4. Authors of Sesame" href="authors.html" />
+    <link rel="prev" title="1.2. Installation instructions (for experienced users)" href="install.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">1. Preliminaries</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-instructions-for-beginners">
+<h1>1.3. Installation instructions (for beginners)<a class="headerlink" href="#installation-instructions-for-beginners" title="Permalink to this headline">¶</a></h1>
+<p>This section documents how to build Sesame for those with zero Python experience.</p>
+<div class="section" id="installing-python">
+<h2>1.3.1. Installing Python<a class="headerlink" href="#installing-python" title="Permalink to this headline">¶</a></h2>
+<p>For users with no Python installation, there are a number of convenient standalone installations which automatically includes all of the requisiste libraries and packages, including:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://www.anaconda.com/">Anaconda</a></li>
+<li><a class="reference external" href="https://www.enthought.com/product/canopy/">Canopy</a></li>
+<li><a class="reference external" href="https://python-xy.github.io/">Pythonxy</a></li>
+</ul>
+<p>These can be installed on any operating system (Windows, GNU/Linux, MacOS).  This page walks through the process using Anaconda in a Windows environment.</p>
+<p>First download and install Anaconda, using the default settings.  After installation, you&#8217;ll find a new folder with various programs in the windows <code class="docutils literal"><span class="pre">Start</span></code> button folder: <code class="docutils literal"><span class="pre">Start</span></code> <img class="math" src="../_images/math/db2555e54bec0d091b2124dccd645c2d7ddaae68.png" alt="\rightarrow"/> <code class="docutils literal"><span class="pre">All</span> <span class="pre">Programs</span></code> <img class="math" src="../_images/math/db2555e54bec0d091b2124dccd645c2d7ddaae68.png" alt="\rightarrow"/> <code class="docutils literal"><span class="pre">Anaconda</span></code>.</p>
+</div>
+<div class="section" id="downloading-and-installing-sesame-on-windows">
+<h2>1.3.2. Downloading and Installing Sesame (on Windows)<a class="headerlink" href="#downloading-and-installing-sesame-on-windows" title="Permalink to this headline">¶</a></h2>
+<p>To obtain Sesame, first open the Anaconda Prompt: <code class="docutils literal"><span class="pre">Start</span></code> <img class="math" src="../_images/math/db2555e54bec0d091b2124dccd645c2d7ddaae68.png" alt="\rightarrow"/> <code class="docutils literal"><span class="pre">All</span> <span class="pre">Programs</span></code> <img class="math" src="../_images/math/db2555e54bec0d091b2124dccd645c2d7ddaae68.png" alt="\rightarrow"/> <code class="docutils literal"><span class="pre">Anaconda</span></code> <img class="math" src="../_images/math/db2555e54bec0d091b2124dccd645c2d7ddaae68.png" alt="\rightarrow"/> <code class="docutils literal"><span class="pre">Anaconda</span> <span class="pre">Prompt</span></code>.  A command line should appear (a primer on using the Windows command line can be found <a class="reference external" href="https://www.computerhope.com/issues/chusedos.htm">here</a>).  Sesame is downloaded using <code class="docutils literal"><span class="pre">git</span></code>.  Make sure <code class="docutils literal"><span class="pre">git</span></code> is installed by first typing:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">anaconda</span> <span class="n">git</span>
+</pre></div>
+</div>
+<p>Once you have <code class="docutils literal"><span class="pre">git</span></code>, obtain Sesame with the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">githum</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">usnistgov</span><span class="o">/</span><span class="n">sesame</span>
+</pre></div>
+</div>
+<p>The git repository of Sesame is cloned in the directory where the command was
+issued. Enter the sesame repository, build and install Sesame with the commands:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">sesame</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
+</pre></div>
+</div>
+<p>The essential procedure for installing for other operating systems is the same.</p>
+</div>
+<div class="section" id="running-sesame">
+<h2>1.3.3. Running Sesame<a class="headerlink" href="#running-sesame" title="Permalink to this headline">¶</a></h2>
+<p>Upon installation, you can try some of the examples.  Navigate the <code class="xref py py-obj docutils literal"><span class="pre">examples</span></code> directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">sesame</span>\<span class="n">examples</span>
+</pre></div>
+</div>
+<p>Running a sesame python script is done with the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="mi">1</span><span class="n">dpn</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>The GUI is launched with the command from the sesame install directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">app</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>Note: some distributions of Anaconda are packaged with older versions of PyQt.  If you find that graphics do not render, or that the GUI does not run, it may be because PyQt is not up to date (Sesame uses PyQt5).  You can try this command to update PyQt if you have difficulty using graphics:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">anaconda</span> <span class="n">pyqt</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">1.3. Installation instructions (for beginners)</a><ul>
+<li><a class="reference internal" href="#installing-python">1.3.1. Installing Python</a></li>
+<li><a class="reference internal" href="#downloading-and-installing-sesame-on-windows">1.3.2. Downloading and Installing Sesame (on Windows)</a></li>
+<li><a class="reference internal" href="#running-sesame">1.3.3. Running Sesame</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="install.html"
+                        title="previous chapter">1.2. Installation instructions (for experienced users)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="authors.html"
+                        title="next chapter">1.4. Authors of Sesame</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/pre/INSTALL_beginner.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="authors.html" title="1.4. Authors of Sesame"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="install.html" title="1.2. Installation instructions (for experienced users)"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sesame.solvers.default.solve &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="sesame.solvers.default.IVcurve" href="sesame.solvers.default.IVcurve.html" />
+    <link rel="prev" title="sesame.solvers.default.solve_equilibrium" href="sesame.solvers.default.solve_equilibrium.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="../index.html" >5. Core modules</a> &#187;</li>
+          <li><a href="../sesame.solvers.html" accesskey="U">5.4. <code class="docutils literal"><span class="pre">sesame.solvers</span></code> &#8211; Equilibrium and nonequilibrium solvers</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sesame-solvers-default-solve">
+<h1>sesame.solvers.default.solve<a class="headerlink" href="#sesame-solvers-default-solve" title="Permalink to this headline">¶</a></h1>
+<dl class="method">
+<dt id="sesame.solvers.default.solve">
+<code class="descclassname">default.</code><code class="descname">solve</code><span class="sig-paren">(</span><em>system</em>, <em>guess=None</em>, <em>tol=1e-06</em>, <em>periodic_bcs=True</em>, <em>maxiter=300</em>, <em>verbose=True</em>, <em>iterative=False</em>, <em>inner_tol=1e-06</em>, <em>htp=1</em><span class="sig-paren">)</span><a class="headerlink" href="#sesame.solvers.default.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the drift diffusion Poisson equation on a given discretized
+system out of equilibrium. If the equilibrium electrostatic potential is
+not yet computed, the routine will compute it and save it for further
+computations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>system: Builder</strong></p>
+<blockquote>
+<div><p>The discretized system.</p>
+</div></blockquote>
+<p><strong>guess: dictionary of numpy arrays of floats</strong></p>
+<blockquote>
+<div><p>Contains the one-dimensional arrays of the initial guesses for the
+electron quasi-Fermi level, the hole quasi-Fermi level and the
+electrostatic potential. Keys should be &#8216;efn&#8217;, &#8216;efp&#8217; and &#8216;v&#8217;.</p>
+</div></blockquote>
+<p><strong>tol: float</strong></p>
+<blockquote>
+<div><p>Accepted error made by the Newton-Raphson scheme.</p>
+</div></blockquote>
+<p><strong>periodic_bcs: boolean</strong></p>
+<blockquote>
+<div><p>Defines the choice of boundary conditions in the y-direction. True
+(False) corresponds to periodic (abrupt) boundary conditions.</p>
+</div></blockquote>
+<p><strong>maxiter: integer</strong></p>
+<blockquote>
+<div><p>Maximum number of steps taken by the Newton-Raphson scheme.</p>
+</div></blockquote>
+<p><strong>verbose: boolean</strong></p>
+<blockquote>
+<div><p>The solver returns the step number and the associated error at every
+step if set to True (default).</p>
+</div></blockquote>
+<p><strong>iterative: boolean</strong></p>
+<blockquote>
+<div><p>Defines if an iterative method should be used to solve for the Newton
+correction instead of a direct method. Default is False.</p>
+</div></blockquote>
+<p><strong>inner_tol: float</strong></p>
+<blockquote>
+<div><p>Error of the inner iterative solver when used.</p>
+</div></blockquote>
+<p><strong>htp: integer</strong></p>
+<blockquote>
+<div><p>Number of homotopic Newton loops to perform.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">solution: dictionary with  numpy arrays of floats</p>
+<blockquote class="last">
+<div><p>Dictionary containing the one-dimensional arrays of the solution. The
+keys are the same as the ones for the guess. An exception is raised
+if no solution could be found.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sesame.solvers.default.solve_equilibrium.html"
+                        title="previous chapter">sesame.solvers.default.solve_equilibrium</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sesame.solvers.default.IVcurve.html"
+                        title="next chapter">sesame.solvers.default.IVcurve</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/reference/generated/sesame.solvers.default.solve.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesame.solvers.default.IVcurve.html" title="sesame.solvers.default.IVcurve"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sesame.solvers.default.solve_equilibrium.html" title="sesame.solvers.default.solve_equilibrium"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

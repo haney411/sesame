@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5.2. sesame.builder – High-level construction of systems &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5.3. sesame.plotter – Plotting of systems" href="sesame.plotter.html" />
+    <link rel="prev" title="5.1. sesame – Top level package" href="sesame.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">5. Core modules</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-sesame.builder">
+<span id="sesame-builder-high-level-construction-of-systems"></span><span id="builder-doc"></span><h1>5.2. <a class="reference internal" href="#module-sesame.builder" title="sesame.builder"><code class="xref py py-mod docutils literal"><span class="pre">sesame.builder</span></code></a> &#8211; High-level construction of systems<a class="headerlink" href="#module-sesame.builder" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sesame.builder.Scaling">
+<em class="property">class </em><code class="descclassname">sesame.builder.</code><code class="descname">Scaling</code><span class="sig-paren">(</span><em>input_length='cm'</em>, <em>T=300</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Scaling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object defining the scalings of the drift-diffusion-Poisson equation. The
+temperature of the system and the reference unit for lengths are specified
+when an instance is created. The default unit for length is cm, and the
+default temperature is 300 K.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>input_length: string</strong></p>
+<blockquote>
+<div><p>Reference unit for lengths. Acceptable entries are &#8216;cm&#8217; for centimeters
+and &#8216;m&#8217; for meters.</p>
+</div></blockquote>
+<p><strong>T: float</strong></p>
+<blockquote class="last">
+<div><p>Temperature for the simulation.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="77%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>denisty: float</td>
+<td>Density scale taken equal to 10<sup>19</sup> cm<sup>-3</sup>.</td>
+</tr>
+<tr class="row-even"><td>energy: float</td>
+<td>Energy scale.</td>
+</tr>
+<tr class="row-odd"><td>mobility: float</td>
+<td>Mobility scale taken equal to 1 cm<sup>2</sup>/(V.s).</td>
+</tr>
+<tr class="row-even"><td>time: float</td>
+<td>Time scale.</td>
+</tr>
+<tr class="row-odd"><td>length: float</td>
+<td>Length scale.</td>
+</tr>
+<tr class="row-even"><td>generation: float</td>
+<td>Scale of generation and recombination rates.</td>
+</tr>
+<tr class="row-odd"><td>velocity: float</td>
+<td>Velocity scale.</td>
+</tr>
+<tr class="row-even"><td>current: float</td>
+<td>Electrical current density scale.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="sesame.builder.Builder">
+<em class="property">class </em><code class="descclassname">sesame.builder.</code><code class="descname">Builder</code><span class="sig-paren">(</span><em>xpts</em>, <em>ypts=None</em>, <em>zpts=None</em>, <em>input_length='cm'</em>, <em>T=300</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder" title="Permalink to this definition">¶</a></dt>
+<dd><p>A system discretized on a mesh.</p>
+<p>This type discretizes a system on a mesh provided by the user, and takes
+care of all normalizations. The temperature of the system is specified when
+an instance is created. The default is 300 K.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>xpts, ypts, zpts: numpy arrays of floats</strong></p>
+<blockquote>
+<div><p>Mesh with original dimensions.</p>
+</div></blockquote>
+<p><strong>input_length: string</strong></p>
+<blockquote>
+<div><p>Reference unit for lengths. Acceptable entries are &#8216;cm&#8217; for centimeters
+and &#8216;m&#8217; for meters.</p>
+</div></blockquote>
+<p><strong>T: float</strong></p>
+<blockquote class="last">
+<div><p>Temperature for the simulation.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="83%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>xpts, ypts, zpts: numpy arrays of floats</td>
+<td>Mesh with original dimensions.</td>
+</tr>
+<tr class="row-even"><td>dx, dy, dz: numpy arrays of floats</td>
+<td>Dimensionless lattice constants in the x, y, z directions.</td>
+</tr>
+<tr class="row-odd"><td>nx, ny, nz: integers</td>
+<td>Number of lattice nodes in the x, y, z directions.</td>
+</tr>
+<tr class="row-even"><td>Nc, Nv: numpy arrays of floats</td>
+<td>Dimensionless effective densities of states of the conduction and valence bands.</td>
+</tr>
+<tr class="row-odd"><td>Eg: numpy array of floats</td>
+<td>Dimensionless band gap.</td>
+</tr>
+<tr class="row-even"><td>ni: numpy array of floats</td>
+<td>Dimensionless intrinsic density.</td>
+</tr>
+<tr class="row-odd"><td>mu_e, mu_h:  numpy arrays of floats</td>
+<td>Dimensionless mobilities of electron and holes.</td>
+</tr>
+<tr class="row-even"><td>tau_e, tau_h:  numpy arrays of floats</td>
+<td>Dimensionless bulk lifetime for electrons and holes.</td>
+</tr>
+<tr class="row-odd"><td>n1, p1:  numpy arrays of floats</td>
+<td>Dimensionless equilibrium densities of electrons and holes at the bulk trap state.</td>
+</tr>
+<tr class="row-even"><td>bl: numpy array of floats</td>
+<td>Electron affinity.</td>
+</tr>
+<tr class="row-odd"><td>g: numpy array of floats</td>
+<td>Dimensionless generation for each site of the system. This is defined only if a generation profile was provided when building the system.</td>
+</tr>
+<tr class="row-even"><td>gtot: float</td>
+<td>Dimensionless integral of the generation rate.</td>
+</tr>
+<tr class="row-odd"><td>defects_list: list of named tuples</td>
+<td>List of named tuples containing the characteristics ofthe defects in the order they were added to the system. The field names are sites, location, dos, energy, sigma_e, sigma_h, transition, perp_dl.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sesame.builder.Builder.add_acceptor">
+<code class="descname">add_acceptor</code><span class="sig-paren">(</span><em>density</em>, <em>location=&lt;function Builder.&lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_acceptor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_acceptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add acceptor dopants to the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>density: float</strong></p>
+<blockquote>
+<div><p>Doping density [cm<sup>-3</sup>].</p>
+</div></blockquote>
+<p><strong>location: Boolean function</strong></p>
+<blockquote class="last">
+<div><p>Definition of the region containing the doping. This function must
+take a tuple of real world coordinates (e.g. (x, y)) as parameters,
+and return True (False) if the lattice node is inside (outside) the
+region.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.add_donor">
+<code class="descname">add_donor</code><span class="sig-paren">(</span><em>density</em>, <em>location=&lt;function Builder.&lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_donor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_donor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add donor dopants to the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>density: float</strong></p>
+<blockquote>
+<div><p>Doping density [cm<sup>-3</sup>].</p>
+</div></blockquote>
+<p><strong>location: Boolean function</strong></p>
+<blockquote class="last">
+<div><p>Definition of the region containing the doping. This function must
+take a tuple of real world coordinates (e.g. (x, y)) as parameters,
+and return True (False) if the lattice node is inside (outside) the
+region.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.add_line_defects">
+<code class="descname">add_line_defects</code><span class="sig-paren">(</span><em>location</em>, <em>N</em>, <em>sigma_e</em>, <em>sigma_h=None</em>, <em>E=None</em>, <em>transition=(1</em>, <em>-1)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_line_defects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_line_defects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add additional charges (for a grain boundary for instance) to the total
+charge of the system. These charges are distributed on a line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: list of two array_like coordinates [(x1, y1), (x2, y2)]</strong></p>
+<blockquote>
+<div><p>The coordinates in [m] define a line of defects in 2D.</p>
+</div></blockquote>
+<p><strong>N: float or function</strong></p>
+<blockquote>
+<div><p>Defect density of states [m<sup>-2</sup> ]. Provide a float when the
+defect density of states is a delta function, or a function
+returning a float for a continuum. This function should take a
+single energy argument in [eV].</p>
+</div></blockquote>
+<p><strong>sigma_e: float</strong></p>
+<blockquote>
+<div><p>Electron capture cross section [m<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>sigma_h: float</strong></p>
+<blockquote>
+<div><p>Hole capture cross section [m<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>E: float</strong></p>
+<blockquote>
+<div><p>Energy level of a single state defined with respect to the intrinsic
+Fermi level [eV]. Set to <em class="xref py py-obj">None</em> for a continuum of states.</p>
+</div></blockquote>
+<p><strong>transition: tuple</strong></p>
+<blockquote class="last">
+<div><p>Charge transition occurring at the energy level E.  The tuple (p, q)
+represents a defect with transition p/q (level empty to level
+occupied).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<ul class="last simple">
+<li>Line defects are defined for two-dimensional systems only.</li>
+<li>We assume that no additional charge is on the contacts.</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#sesame.builder.Builder.add_plane_defects" title="sesame.builder.Builder.add_plane_defects"><code class="xref py py-obj docutils literal"><span class="pre">add_plane_defects</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.add_material">
+<code class="descname">add_material</code><span class="sig-paren">(</span><em>mat</em>, <em>location=&lt;function Builder.&lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_material"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_material" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a material to the system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>mat: dictionary</strong></p>
+<blockquote>
+<div><p>Contains the material parameters Keys are Nc (Nv): conduction
+(valence) effective densities of states [cm<sup>-3</sup>], Eg: band
+gap [<img class="math" src="../_images/math/7e39bd8717cc82ed0615eac839ac69b1370203d3.png" alt="\mathrm{eV}"/>], epsilon: material&#8217;s permitivitty, mu_e
+(mu_h): electron (hole) mobility [m<sup>2</sup>/(V s)], tau_e (tau_h):
+electron (hole) bulk lifetime [s], Et: energy level of the bulk
+recombination centers [eV], affinity: electron affinity [eV], B:
+radiation recombination constant [cm<sup>3</sup>/s], Cn (Cp): Auger
+recombination constant for electrons (holes) [cm<sup>6</sup>/s],
+mass_e (mass_h): effective mass of electrons (holes). All parameters
+can be scalars or callable functions similar to the location
+argument.</p>
+</div></blockquote>
+<p><strong>location: Boolean function</strong></p>
+<blockquote class="last">
+<div><p>Definition of the region containing the material. This function must
+take a tuple of real world coordinates (e.g. (x, y)) as parameter,
+and return True (False) if the lattice node is inside (outside) the
+region.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.add_plane_defects">
+<code class="descname">add_plane_defects</code><span class="sig-paren">(</span><em>location</em>, <em>N</em>, <em>sigma_e</em>, <em>sigma_h=None</em>, <em>E=None</em>, <em>transition=(1</em>, <em>-1)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_plane_defects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_plane_defects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add additional charges (for a grain boundary for instance) to the total
+charge of the system. These charges are distributed on a plane.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: list of four array_like coordinates [(x1, y1, z1), (x2, y2, z2), (x3, y3, z3), (x4, y4, z4)]</strong></p>
+<blockquote>
+<div><p>The coordinates in [m] define a plane of defects in 3D. The first
+two coordinates define a line that must be parallel to the line
+defined by the last two points.</p>
+</div></blockquote>
+<p><strong>N: float or function</strong></p>
+<blockquote>
+<div><p>Defect density of states [cm<sup>-2</sup> ]. Provide a float when the
+defect density of states is a delta function, or a function
+returning a float for a continuum. This function should take a
+single energy argument in [eV].</p>
+</div></blockquote>
+<p><strong>sigma_e: float</strong></p>
+<blockquote>
+<div><p>Electron capture cross section [cm<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>sigma_h: float</strong></p>
+<blockquote>
+<div><p>Hole capture cross section [cm<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>E: float</strong></p>
+<blockquote>
+<div><p>Energy level of a single state defined with respect to the intrinsic
+Fermi level [eV]. Set to <em class="xref py py-obj">None</em> for a continuum of states.</p>
+</div></blockquote>
+<p><strong>transition: tuple</strong></p>
+<blockquote class="last">
+<div><p>Charge transition occurring at the energy level E.  The tuple (p, q)
+represents a defect with transition p/q (level empty to level
+occupied).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<ul class="last simple">
+<li>The planes must be rectangles with at least one edge parallel to
+either the x or y or z-axis.</li>
+<li>The two lines that define a plane must be parallel to either x or y or
+z-axis</li>
+<li>Plane defects are defined for three-dimensional systems only.</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#sesame.builder.Builder.add_line_defects" title="sesame.builder.Builder.add_line_defects"><code class="xref py py-obj docutils literal"><span class="pre">add_line_defects</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.add_point_defects">
+<code class="descname">add_point_defects</code><span class="sig-paren">(</span><em>location</em>, <em>N</em>, <em>sigma_e</em>, <em>sigma_h=None</em>, <em>E=None</em>, <em>transition=(1</em>, <em>-1)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.add_point_defects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.add_point_defects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add additional charges (for a grain boundary for instance) to the total
+charge of the system. These charges are distributed on a line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>location: float</strong></p>
+<blockquote>
+<div><p>The coordinate in [cm] defines a point defect in 1D.</p>
+</div></blockquote>
+<p><strong>N: float or function</strong></p>
+<blockquote>
+<div><p>Defect density of states [cm<sup>-2</sup> ]. Provide a float when the
+defect density of states is a delta function, or a function
+returning a float for a continuum. This function should take a
+single energy argument in [eV].</p>
+</div></blockquote>
+<p><strong>sigma_e: float</strong></p>
+<blockquote>
+<div><p>Electron capture cross section [cm<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>sigma_h: float</strong></p>
+<blockquote>
+<div><p>Hole capture cross section [cm<sup>2</sup>].</p>
+</div></blockquote>
+<p><strong>E: float</strong></p>
+<blockquote>
+<div><p>Energy level of a single state defined with respect to the intrinsic
+Fermi level [eV]. Set to <em class="xref py py-obj">None</em> for a continuum of states.</p>
+</div></blockquote>
+<p><strong>transition: tuple</strong></p>
+<blockquote class="last">
+<div><p>Charge transition occurring at the energy level E.  The tuple (p, q)
+represents a defect with transition p/q (level empty to level
+occupied).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<ul class="last simple">
+<li>Point defects are defined for one-dimensional systems only.</li>
+<li>We assume that no additional charge is on the contacts.</li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#sesame.builder.Builder.add_line_defects" title="sesame.builder.Builder.add_line_defects"><code class="xref py py-obj docutils literal"><span class="pre">add_line_defects</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.contact_S">
+<code class="descname">contact_S</code><span class="sig-paren">(</span><em>Scn_left</em>, <em>Scp_left</em>, <em>Scn_right</em>, <em>Scp_right</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.contact_S"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.contact_S" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the lists of recombination velocities that define the charge
+collection at the contacts out of equilibrium.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>Scn_left: float</strong></p>
+<blockquote>
+<div><p>Surface recombination velocity for electrons at the left contact [cm/s].</p>
+</div></blockquote>
+<p><strong>Scp_left: float</strong></p>
+<blockquote>
+<div><p>Surface recombination velocity for holes at the left contact [cm/s].</p>
+</div></blockquote>
+<p><strong>Scn_right: float</strong></p>
+<blockquote>
+<div><p>Surface recombination velocity for electrons at the right contact [cm/s].</p>
+</div></blockquote>
+<p><strong>Scn_right: float</strong></p>
+<blockquote class="last">
+<div><p>Surface recombination velocity for electrons at the right contact [cm/s].</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.contact_type">
+<code class="descname">contact_type</code><span class="sig-paren">(</span><em>left_contact</em>, <em>right_contact</em>, <em>left_wf=None</em>, <em>right_wf=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.contact_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.contact_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the boundary conditions for the contacts at thermal equilibrium.
+&#8216;Ohmic&#8217; or &#8216;Schottky&#8217; impose a value of the electrostatic potential,
+&#8216;Neutral&#8217; imposes a zero potential derivative.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>left_contact: string</strong></p>
+<blockquote>
+<div><p>Boundary conditions for the contact at x=0.</p>
+</div></blockquote>
+<p><strong>right_contact: string</strong></p>
+<blockquote>
+<div><p>Boundary conditions for the contact at x=L.</p>
+</div></blockquote>
+<p><strong>left_wf: float</strong></p>
+<blockquote>
+<div><p>Work function for a Schottky contact at x=0.</p>
+</div></blockquote>
+<p><strong>right_wf: float</strong></p>
+<blockquote class="last">
+<div><p>Work function for a Schottky contact at x=L.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Schottky contacts require work functions. If no values are given, an
+error will be raised.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sesame.builder.Builder.generation">
+<code class="descname">generation</code><span class="sig-paren">(</span><em>f</em>, <em>args=[]</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/builder.html#Builder.generation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.builder.Builder.generation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Distribution of generated carriers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f: function</strong></p>
+<blockquote>
+<div><p>Generation rate [cm<sup>-3</sup>].</p>
+</div></blockquote>
+<p><strong>args: tuple</strong></p>
+<blockquote class="last">
+<div><p>Additional arguments to be passed to the function.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sesame.html"
+                        title="previous chapter">5.1. <code class="docutils literal"><span class="pre">sesame</span></code> &#8211; Top level package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sesame.plotter.html"
+                        title="next chapter">5.3. <code class="docutils literal"><span class="pre">sesame.plotter</span></code> &#8211; Plotting of systems</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/sesame.builder.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesame.plotter.html" title="5.3. sesame.plotter – Plotting of systems"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sesame.html" title="5.1. sesame – Top level package"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

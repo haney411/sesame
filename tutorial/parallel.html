@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3.6. Tutorial 6: Batch submission for computing clusters &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="4. Using Sesame with the GUI" href="../gui/index.html" />
+    <link rel="prev" title="3.5. Tutorial 5: Simulating an EBIC/CL experiment" href="tuto_ebic.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" accesskey="U">3. Tutorial: learning Sesame through examples</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tutorial-6-batch-submission-for-computing-clusters">
+<h1>3.6. Tutorial 6: Batch submission for computing clusters<a class="headerlink" href="#tutorial-6-batch-submission-for-computing-clusters" title="Permalink to this headline">¶</a></h1>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The example treated here is in the file <code class="docutils literal"><span class="pre">sesame_batch_job.py</span></code> located in the <code class="docutils literal"><span class="pre">examples\tutorial6</span></code> directory of the distribution.</p>
+</div>
+<div class="section" id="running-sesame-on-a-cluster">
+<h2>3.6.1. Running Sesame on a cluster<a class="headerlink" href="#running-sesame-on-a-cluster" title="Permalink to this headline">¶</a></h2>
+<p>Next we give an example of running Sesame on a computing cluster.  This can be accomplished in several different ways; the most efficient way depends on the details of the cluster environment.  For our example, the prerequisites libraries are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://www.open-mpi.org">MPI Library</a></li>
+<li><a class="reference external" href="http://mpi4py.scipy.org">mpi4py</a></li>
+</ul>
+</div></blockquote>
+<p>The basic idea is illustrated in schematic below  (note we follow MPI and python convention where indices start from 0).  We have more than one processor available to execute all of the (independent) jobs.  In this case, we&#8217;ll assign the jobs as shown in the figure:</p>
+<img alt="../_images/mpi.PNG" class="align-center" src="../_images/mpi.PNG" />
+<p>Any executable which uses MPI is called from the command line using the prefix <code class="docutils literal"><span class="pre">mpirun</span></code>.  For example, the script &#8220;parallel_batch_example.py&#8221; is run on 32 processors with the following command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mpirun</span> <span class="o">-</span><span class="n">np</span> <span class="mi">32</span> <span class="n">python3</span> <span class="n">parallel_batch_example</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parallel-script-description">
+<h2>3.6.2. Parallel script description<a class="headerlink" href="#parallel-script-description" title="Permalink to this headline">¶</a></h2>
+<p>We first import some additional packages:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sesame</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="k">import</span> <span class="n">MPI</span>
+</pre></div>
+</div>
+<p>The first half of the script contains a function called <code class="docutils literal"><span class="pre">system</span></code>.   The <code class="docutils literal"><span class="pre">system</span></code> function takes parameter values as input and constructs a system object.  This works as in previous tutorials, so we&#8217;ll skip over it for now and begin with the second half contains a block of code, which begins:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+</pre></div>
+</div>
+<p>Calling &#8220;parallel_batch_example.py&#8221; runs the code within the block contained in this &#8220;main&#8221; block. In the next section we describe the &#8220;main&#8221; code, which performs the actual parallel-ization of the job.</p>
+</div>
+<div class="section" id="cycling-over-parameters-on-a-computing-cluster">
+<h2>3.6.3. Cycling over parameters on a computing cluster<a class="headerlink" href="#cycling-over-parameters-on-a-computing-cluster" title="Permalink to this headline">¶</a></h2>
+<p>The primary task of the &#8220;main&#8221; script is to distribute independent serial jobs among an arbitrary number of processors.  This is the easiest type of parallel computing (known as &#8220;embarassingly parallel&#8221;), and requires only a couple of additional lines of code.</p>
+<p>We first initialize the MPI library with the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mpi_comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+</pre></div>
+</div>
+<p>We next determine the total number of processors available with <code class="docutils literal"><span class="pre">mpi_comm.Get_size()</span></code>, and the &#8220;rank&#8221; of a particular instance of the program using <code class="docutils literal"><span class="pre">mpi_comm.Get_rank()</span></code>.  In the schematic shown at the beginning, <code class="docutils literal"><span class="pre">mpisize=4</span></code>, and each processor is assigned its own rank: 0, 1, 2, or 3.  The processors will all run the code identically, with the exception that each has its own unique value of mpirank:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mpirank</span> <span class="o">=</span> <span class="n">mpi_comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+<span class="n">mpisize</span> <span class="o">=</span> <span class="n">mpi_comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>We define the set of parameter lists we want to study:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">rho_GBlist</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="n">e11</span><span class="p">,</span> <span class="mi">1</span><span class="n">e12</span><span class="p">,</span> <span class="mi">1</span><span class="n">e13</span><span class="p">]</span>           <span class="c1"># [1/cm^2]</span>
+<span class="n">E_GBlist</span> <span class="o">=</span> <span class="p">[</span><span class="o">-.</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">3</span><span class="p">]</span>                   <span class="c1"># [eV]</span>
+<span class="n">S_GBlist</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">14</span><span class="p">,</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">15</span><span class="p">,</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">16</span><span class="p">]</span>          <span class="c1"># [cm^2]</span>
+<span class="n">taulist</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">9</span><span class="p">]</span>              <span class="c1"># [s]</span>
+</pre></div>
+</div>
+<p>We use the itertools product function to form a list of all combinations of parameter values.  The total number of jobs (<code class="docutils literal"><span class="pre">njobs</span></code> is equal to the product of the length of all parameter lists.  This can get quite large if we vary several parameters (for this case we have 180 jobs):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">paramlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">rho_GBlist</span><span class="p">,</span> <span class="n">E_GBlist</span><span class="p">,</span> <span class="n">S_GBlist</span><span class="p">,</span>  <span class="n">taulist</span><span class="p">))</span>
+<span class="n">njobs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">paramlist</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here&#8217;s where the parallel-ization of the batch processes enters.  Each node only needs to compute a subset of all parameters.  We set the relevant parameters for each node with the function <code class="docutils literal"><span class="pre">range</span></code>.  The inputs are: starting index, ending index, step size:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">my_param_indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">mpirank</span><span class="p">,</span><span class="n">njobs</span><span class="p">,</span><span class="n">mpisize</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This partitions the jobs as shown at the top of the page: each processor starts on a different job (the first job index equals the <code class="docutils literal"><span class="pre">mpirank</span></code> value) and skips over <code class="docutils literal"><span class="pre">mpisize</span></code> jobs to the next one.  In this way we cover all jobs roughly equally between all the processors.</p>
+<p>Next we define two arrays in which to store the computed I-V values.  One of them is a local array, the other is a &#8220;global&#8221; array into which all the computed values will be set at the end of the program:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Define array to store computed J-V values</span>
+<span class="n">jvset_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">njobs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">voltages</span><span class="p">)])</span>
+<span class="n">jvset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">njobs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">voltages</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>Most of the parallel-ization is completed.  The only remaining parallel component of code occurs at the very end, when we compile the results from all the processors into a single array.</p>
+</div>
+<div class="section" id="defining-the-system">
+<h2>3.6.4. Defining the system<a class="headerlink" href="#defining-the-system" title="Permalink to this headline">¶</a></h2>
+<p>We define a function which takes in a list of parameters.  In this case, the parameters are <img class="math" src="../_images/math/3bf790eaa8fc108fa43c6375551d6415e254a33b.png" alt="\rho_{GB},~E_{GB},~S_{GB},~\tau"/>.  The construction of the system follows the previous examples:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">system</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+
+    <span class="c1"># we assume the params are given in order: [rho_GB, E_GB, S_GB, tau]</span>
+    <span class="n">rho_GB</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">E_GB</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">S_GB</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="c1"># Dimensions of the system</span>
+    <span class="n">Lx</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>  <span class="c1"># [cm]</span>
+    <span class="n">Ly</span> <span class="o">=</span> <span class="mi">3</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>  <span class="c1"># [cm]</span>
+
+    <span class="c1"># Mesh</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.2e-4</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.2e-4</span><span class="p">,</span> <span class="mf">1.4e-4</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.4e-4</span><span class="p">,</span> <span class="mf">2.7e-4</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.7e-4</span><span class="p">,</span> <span class="mf">2.98e-4</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.98e-4</span><span class="p">,</span> <span class="n">Lx</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.25e-4</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.25e-4</span><span class="p">,</span> <span class="mf">1.75e-4</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">1.75e-4</span><span class="p">,</span> <span class="n">Ly</span><span class="p">,</span> <span class="mi">60</span><span class="p">)))</span>
+
+    <span class="n">sys</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">Builder</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>      <span class="c1"># Create a system</span>
+
+    <span class="c1"># Dictionary with the material parameters</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Nc&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="n">e17</span><span class="p">,</span> <span class="s1">&#39;Nv&#39;</span><span class="p">:</span> <span class="mf">1.8e19</span><span class="p">,</span> <span class="s1">&#39;Eg&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s1">&#39;epsilon&#39;</span><span class="p">:</span> <span class="mf">9.4</span><span class="p">,</span> <span class="s1">&#39;Et&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+           <span class="s1">&#39;mu_e&#39;</span><span class="p">:</span> <span class="mi">320</span><span class="p">,</span> <span class="s1">&#39;mu_h&#39;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span> <span class="s1">&#39;tau_e&#39;</span><span class="p">:</span> <span class="n">tau</span><span class="p">,</span> <span class="s1">&#39;tau_h&#39;</span><span class="p">:</span> <span class="n">tau</span><span class="p">}</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">add_material</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>           <span class="c1"># Add the material to the system</span>
+
+    <span class="n">junction</span> <span class="o">=</span> <span class="o">.</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span>  <span class="c1"># [cm]</span>
+
+    <span class="c1"># Define a function specifiying the n-type region</span>
+    <span class="k">def</span> <span class="nf">region1</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">junction</span>
+
+    <span class="c1"># Define a function specifiying the p-type region</span>
+    <span class="k">def</span> <span class="nf">region2</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">junction</span>
+
+    <span class="n">nD</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e17</span>                           <span class="c1"># Donor density [cm^-3]</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">add_donor</span><span class="p">(</span><span class="n">nD</span><span class="p">,</span> <span class="n">region1</span><span class="p">)</span>          <span class="c1"># Add the donors</span>
+    <span class="n">nA</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e15</span>                           <span class="c1"># Acceptor density [cm^-3]</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">add_acceptor</span><span class="p">(</span><span class="n">nA</span><span class="p">,</span> <span class="n">region2</span><span class="p">)</span>               <span class="c1"># Add the acceptors</span>
+
+
+    <span class="c1"># Define contacts: CdS and CdTe contacts are Ohmic</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">contact_type</span><span class="p">(</span><span class="s1">&#39;Ohmic&#39;</span><span class="p">,</span> <span class="s1">&#39;Ohmic&#39;</span><span class="p">)</span>
+    <span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span> <span class="o">=</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span><span class="p">,</span> <span class="mi">1</span><span class="n">e7</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">contact_S</span><span class="p">(</span><span class="n">Sn_left</span><span class="p">,</span> <span class="n">Sp_left</span><span class="p">,</span> <span class="n">Sn_right</span><span class="p">,</span> <span class="n">Sp_right</span><span class="p">)</span>
+
+    <span class="c1"># Specify the two points that make the line containing additional   charges</span>
+    <span class="n">p1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.1e-4</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>    <span class="c1"># [cm]</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.9e-4</span><span class="p">,</span> <span class="mf">1.5e-4</span><span class="p">)</span>    <span class="c1"># [cm]</span>
+
+    <span class="c1"># Add donor defect along GB</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">add_line_defects</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">],</span> <span class="n">rho_GB</span><span class="p">,</span> <span class="n">S_GB</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_GB</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="c1"># Add acceptor defect along GB</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">add_line_defects</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">],</span> <span class="n">rho_GB</span><span class="p">,</span> <span class="n">S_GB</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E_GB</span><span class="p">,</span> <span class="n">transition</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">sys</span>
+</pre></div>
+</div>
+<p>Here we define the set of applied voltages:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Specify applied voltages</span>
+<span class="n">voltages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now we cycle over all the parameter sets which apply to a given node:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># cycle over all parameter sets</span>
+<span class="k">for</span> <span class="n">myjobcounter</span> <span class="ow">in</span> <span class="n">my_param_indices</span><span class="p">:</span>
+
+    <span class="c1"># Get system for given set of parameters</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">paramlist</span><span class="p">[</span><span class="n">myjobcounter</span><span class="p">]</span>
+    <span class="n">sys</span> <span class="o">=</span> <span class="n">system</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="c1"># Get equilibrium solution</span>
+    <span class="n">eqsolution</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">solve_equilibrium</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+
+    <span class="c1"># Define a function for generation profile</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="mf">2.3e21</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">2.3e4</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="c1"># add generation to the system</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">generation</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># Specify output filename for given parameter set</span>
+    <span class="n">outputfile</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">paramvalue</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+        <span class="n">outputfile</span> <span class="o">=</span> <span class="n">outputfile</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">paramvalue</span><span class="p">)</span>
+
+    <span class="c1"># Compute J-V curve</span>
+    <span class="n">jv</span> <span class="o">=</span> <span class="n">sesame</span><span class="o">.</span><span class="n">IVcurve</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="n">eqsolution</span><span class="p">,</span> <span class="n">outputfile</span><span class="p">)</span>
+    <span class="c1"># Save computed J-V in array</span>
+    <span class="n">jvset_local</span><span class="p">[</span><span class="n">myjobcounter</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">jv</span>
+</pre></div>
+</div>
+<p>To combine the output of all the processers, we use <code class="docutils literal"><span class="pre">mpi_comm.Reduce</span></code>.  The first argument is the local value of jv; the second argument is the global jv array.  The local arrays will be added together and stored in the global array:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mpi_comm</span><span class="o">.</span><span class="n">Reduce</span><span class="p">(</span><span class="n">jvset_local</span><span class="p">,</span><span class="n">jvset</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally we save the global array of jv values, together with the list of parameters in a file &#8220;JVset&#8221;:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">&quot;JVset&quot;</span><span class="p">,</span> <span class="n">jvset</span><span class="p">,</span> <span class="n">paramlist</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3.6. Tutorial 6: Batch submission for computing clusters</a><ul>
+<li><a class="reference internal" href="#running-sesame-on-a-cluster">3.6.1. Running Sesame on a cluster</a></li>
+<li><a class="reference internal" href="#parallel-script-description">3.6.2. Parallel script description</a></li>
+<li><a class="reference internal" href="#cycling-over-parameters-on-a-computing-cluster">3.6.3. Cycling over parameters on a computing cluster</a></li>
+<li><a class="reference internal" href="#defining-the-system">3.6.4. Defining the system</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tuto_ebic.html"
+                        title="previous chapter">3.5. Tutorial 5: Simulating an EBIC/CL experiment</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../gui/index.html"
+                        title="next chapter">4. Using Sesame with the GUI</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/tutorial/parallel.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../gui/index.html" title="4. Using Sesame with the GUI"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tuto_ebic.html" title="3.5. Tutorial 5: Simulating an EBIC/CL experiment"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

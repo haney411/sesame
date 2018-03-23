@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sesame.solvers.Solver – Sesame solver oject &#8212; Sesame  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5.5. sesame.analyzer – Computing densities, recombination and currents" href="sesame.analyzer.html" />
+    <link rel="prev" title="sesame.solvers.default.IVcurve" href="generated/sesame.solvers.default.IVcurve.html" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <link rel="shortcut icon" type="image/png" href="../_static/favicon.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=0.8">
+    
+    
+
+  </head>
+  <body role="document">
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="responsive-menu"><a href="#sidebar-anchor" title="Navigation">&#9776;</a></li>
+        <li><a href="../index.html">Sesame  documentation</a> &#187;</li>
+          <li><a href="index.html" >5. Core modules</a> &#187;</li>
+          <li><a href="sesame.solvers.html" accesskey="U">5.4. <code class="docutils literal"><span class="pre">sesame.solvers</span></code> &#8211; Equilibrium and nonequilibrium solvers</a> &#187;</li> 
+      </ul>
+    </div>
+    
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sesame-solvers-solver-sesame-solver-oject">
+<h1><a class="reference internal" href="#sesame.solvers.Solver" title="sesame.solvers.Solver"><code class="xref py py-mod docutils literal"><span class="pre">sesame.solvers.Solver</span></code></a> &#8211; Sesame solver oject<a class="headerlink" href="#sesame-solvers-solver-sesame-solver-oject" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="sesame.solvers.Solver">
+<em class="property">class </em><code class="descclassname">sesame.solvers.</code><code class="descname">Solver</code><span class="sig-paren">(</span><em>use_mumps=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sesame/solvers.html#Solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sesame.solvers.Solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object that creates an interface for the equilibrium and nonequilibrium
+solvers of Sesame, and stores the equilibrium electrostatic potential once
+computed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>use_mumps: boolean</strong></p>
+<blockquote class="last">
+<div><p>Flag for the use of the MUMPS library if available. The flag is set to
+True by default. If the MUMPS library is absent, the flag has no effect.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>equilibrium: numpy array of floats</td>
+<td>Electrostatic potential computed at thermal equilibrium.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    <a id="sidebar-anchor"></a>
+    
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo_sesame.png" alt="Logo"/>
+            </a></p>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="generated/sesame.solvers.default.IVcurve.html"
+                        title="previous chapter">sesame.solvers.default.IVcurve</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sesame.analyzer.html"
+                        title="next chapter">5.5. <code class="docutils literal"><span class="pre">sesame.analyzer</span></code> &#8211; Computing densities, recombination and currents</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/sesame.solvers.solver.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesame.analyzer.html" title="5.5. sesame.analyzer – Computing densities, recombination and currents"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="generated/sesame.solvers.default.IVcurve.html" title="sesame.solvers.default.IVcurve"
+             accesskey="P">previous</a> |</li>
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

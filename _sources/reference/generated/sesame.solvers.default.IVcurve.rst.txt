@@ -1,0 +1,6 @@
+sesame\.solvers\.default\.IVcurve
+=================================
+
+.. currentmodule:: sesame.solvers
+
+.. automethod:: default.IVcurve

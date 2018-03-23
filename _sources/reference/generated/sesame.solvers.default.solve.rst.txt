@@ -1,0 +1,6 @@
+sesame\.solvers\.default\.solve
+===============================
+
+.. currentmodule:: sesame.solvers
+
+.. automethod:: default.solve
