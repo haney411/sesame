@@ -39,14 +39,14 @@ Sesame can be built  and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
 in the root directory of the Sesame distribution::
 
-    python3 setup.py build
-    python3 setup.py install
+    python setup.py build
+    python setup.py install
 
 Depending on your system, you might have to run the second command with
 administrator privileges. The installation
 step can be done locally either by using the ``--user`` prefix::
 
-    python3 setup.py install --user
+    python setup.py install --user
 
 or by specifying the location where to install the package files with
 ``--prefix=/path/of/directory``.
@@ -88,11 +88,11 @@ appear.
 As an alternative if ``make`` is not available, the HTML documentation can be built
 using the command from the root directory::
 
-    python3 setup.py build_sphinx
+    python setup.py build_sphinx
 
 The documentation is produced in ``doc/build/html``. To build the PDF file::
 
-    python3 setup.py build_sphinx -b latex
+    python setup.py build_sphinx -b latex
     cd doc/build/latex
     make all-pdf
 
@@ -110,10 +110,10 @@ Sesame should run on all recent Unix-like systems.
 
 2. Inside the Sesame source distribution's root directory run ::
 
-       python3 setup.py build
+       python setup.py build
        sudo python3 setup.py install
 
-Run ``python3 setup.py --help install`` for installation options.
+Run ``python setup.py --help install`` for installation options.
 
 
 Microsoft Windows
