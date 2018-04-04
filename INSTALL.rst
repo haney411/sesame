@@ -10,7 +10,7 @@ Building Sesame requires
  * `Python <http://python.org>`_ 3.4 or above,
  * `SciPy <http://scipy.org>`_ 0.9 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
-   (For best performance the free `OpenBLAS
+   (other options are the free `OpenBLAS
    <http://xianyi.github.com/OpenBLAS/>`_ or the nonfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_ can be used.)
 
