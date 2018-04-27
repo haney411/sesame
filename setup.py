@@ -6,7 +6,6 @@
 # LICENSE.rst found in the top-level directory of this distribution.
  
 import sys
-import configparser
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.errors import DistutilsPlatformError, DistutilsExecError, CCompilerError
@@ -77,42 +76,6 @@ def run_setup(packages, ext_modules):
     )
 
 
-config = configparser.ConfigParser()
-try:
-    with open(CONFIG_FILE) as f:
-        config.readfp(f)
-except IOError:
-    print("Could not open config file.")
-
 packages = ['sesame']
-if config.getboolean('GUI', 'use'):
-    packages.append('sesame.ui')
-if 'mumps' in config.sections():
-    packages.append('sesame.mumps')
-
-if 'mumps' in config.sections():
-    kwrds = {}
-    for name, value in config.items('mumps'):
-        kwrds[name] = value
-
-    ext_modules = [Extension(
-        'sesame.mumps._dmumps',
-        sources=['sesame/mumps/_dmumps.c'],  
-        libraries=[kwrds['libraries']],
-        library_dirs=[kwrds['library_dirs']],
-        include_dirs=[kwrds['include_dirs']])]
-
-    try:
-        run_setup(packages, ext_modules)
-        status_msgs("Done")
-    except BuildFailed as exc:
-        status_msgs(
-            exc.cause,
-            "WARNING: The MUMPS extension could not be compiled. " +
-            "Retrying the build without the MUMPS extension now.")
-        packages.remove('sesame.mumps')
-        run_setup(packages, [])
-        status_msgs("Done")
-else:
-    run_setup(packages, [])
-    status_msgs( "Done")
+run_setup(packages, [])
+status_msgs( "Done")
