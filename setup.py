@@ -6,7 +6,7 @@
 # LICENSE.rst found in the top-level directory of this distribution.
  
 import sys
-import ConfigParser
+import configparser
 from setuptools import setup, Extension
 from distutils.command.build_ext import build_ext
 from distutils.errors import DistutilsPlatformError, DistutilsExecError, CCompilerError
@@ -77,7 +77,7 @@ def run_setup(packages, ext_modules):
     )
 
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 try:
     with open(CONFIG_FILE) as f:
         config.readfp(f)
