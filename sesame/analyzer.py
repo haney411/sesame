@@ -135,7 +135,7 @@ class Analyzer():
                               r'$\mathregular{E_{F_p}}$'])
 
 
-        ax.set_xlabel('Position [µm]')
+        #ax.set_xlabel('Position [µm]')
         ax.set_ylabel('Energy [eV]')
 
         if show:
